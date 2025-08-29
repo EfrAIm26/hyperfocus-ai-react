@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../supabaseClient'
 import Sidebar from '../Sidebar/Sidebar'
 import ChatWindow from '../ChatWindow/ChatWindow'
@@ -11,12 +12,11 @@ interface UserProfile {
 }
 
 interface AppLayoutProps {
-  user: any // Will be typed properly when we add user types
+  user: User
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>(undefined)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
@@ -50,8 +50,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
           full_name: user?.user_metadata?.full_name || null,
           email: user?.email || 'User'
         })
-      } finally {
-        setLoading(false)
       }
     }
 

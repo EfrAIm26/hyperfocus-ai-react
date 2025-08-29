@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../supabaseClient'
 import styles from './ChatWindow.module.css'
 
@@ -10,7 +11,7 @@ interface Message {
 }
 
 interface ChatWindowProps {
-  user: any
+  user: User
   selectedChatId?: string
   onNewChat?: () => void
 }
@@ -105,7 +106,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         return
       }
 
-      const formattedMessages: Message[] = (messagesData || []).map(msg => ({
+      const formattedMessages: Message[] = (messagesData || []).map((msg: any) => ({
         id: msg.id,
         content: msg.content,
         role: msg.role as 'user' | 'assistant',

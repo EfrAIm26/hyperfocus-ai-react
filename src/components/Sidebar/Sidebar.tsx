@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../supabaseClient';
-import { User } from '@supabase/supabase-js';
 import styles from './Sidebar.module.css';
 
 interface Course {
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
     }
 
     // Close context menu when clicking outside
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (_e: MouseEvent) => {
       if (showContextMenu) {
         setShowContextMenu(null);
       }
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
       const { data: topicsData, error: topicsError } = await supabase
         .from('topics')
         .select('*')
-        .in('course_id', (coursesData || []).map(c => c.id))
+        .in('course_id', (coursesData || []).map((c: any) => c.id))
         .order('created_at', { ascending: true });
       
       if (topicsError) throw topicsError;
