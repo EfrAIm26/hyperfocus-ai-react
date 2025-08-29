@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../supabaseClient';
+import CreateCourseModal from '../CreateCourseModal/CreateCourseModal';
 import styles from './Sidebar.module.css';
 
 interface Course {
@@ -32,19 +33,35 @@ interface Chat {
 
 interface SidebarProps {
   user: User;
+  courses: Course[];
+  chats: Chat[];
   onChatSelect: (chatId: string) => void;
   selectedChatId?: string;
-  refreshTrigger?: number;
+  // refreshTrigger removed to fix infinite re-render loop
+  onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>;
+  onRefreshData: () => void;
+  setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
 }
 
 interface ExpandedState {
   [key: string]: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, refreshTrigger }) => {
-  const [courses, setCourses] = useState<Course[]>([]);
+const Sidebar: React.FC<SidebarProps> = ({ 
+  user, 
+  courses, 
+  chats, 
+  onChatSelect, 
+  selectedChatId, 
+  // refreshTrigger removed 
+  onCreateCourse, 
+  onRefreshData,
+  setCourses,
+  setChats
+}) => {
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [chats, setChats] = useState<Chat[]>([]);
+  const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [loading, setLoading] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -73,41 +90,24 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [user.id, showContextMenu, refreshTrigger]);
+  }, [user.id, showContextMenu]); // refreshTrigger removed from dependencies
 
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // Fetch courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+      // Use centralized refresh function for courses and chats
+      onRefreshData();
       
-      if (coursesError) throw coursesError;
-      setCourses(coursesData || []);
-      
-      // Fetch topics
+      // Fetch topics (still local to Sidebar)
       const { data: topicsData, error: topicsError } = await supabase
         .from('topics')
         .select('*')
-        .in('course_id', (coursesData || []).map((c: any) => c.id))
+        .in('course_id', courses.map((c: any) => c.id))
         .order('created_at', { ascending: true });
       
       if (topicsError) throw topicsError;
       setTopics(topicsData || []);
-      
-      // Fetch chats
-      const { data: chatsData, error: chatsError } = await supabase
-        .from('chats')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (chatsError) throw chatsError;
-      setChats(chatsData || []);
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -122,7 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
       .channel('courses_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'courses', filter: `user_id=eq.${user.id}` },
-        () => fetchData()
+        () => onRefreshData()
       )
       .subscribe();
 
@@ -140,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
       .channel('chats_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'chats', filter: `user_id=eq.${user.id}` },
-        () => fetchData()
+        () => onRefreshData()
       )
       .subscribe();
 
@@ -161,24 +161,13 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
     setShowContextMenu({ type, id, x: e.clientX, y: e.clientY });
   };
 
-  const handleCreateCourse = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('courses')
-        .insert({
-          name: 'Nuevo Curso',
-          color: '#3b82f6',
-          emoji: '📚',
-          user_id: user.id
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      setEditingItem({ type: 'course', id: data.id, name: data.name });
-    } catch (error) {
-      console.error('Error creating course:', error);
-    }
+  const handleCreateCourseClick = () => {
+    setIsCreateCourseModalOpen(true);
+  };
+
+  const handleCreateCourseSubmit = async (courseData: { name: string; emoji: string; color: string }) => {
+    await onCreateCourse(courseData);
+    setIsCreateCourseModalOpen(false);
   };
 
   const handleCreateTopic = async (courseId: string) => {
@@ -353,7 +342,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
       <div className={styles.sidebar} style={{ width: sidebarWidth }}>
         <div className={styles.header}>
           <h3>📚 Hyperfocus AI</h3>
-          <button className={styles.newCourseButton} onClick={handleCreateCourse}>
+          <button className={styles.newCourseButton} onClick={handleCreateCourseClick}>
             ➕ Nuevo Curso
           </button>
         </div>
@@ -544,6 +533,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onChatSelect, selectedChatId, r
       </div>
       
       {renderContextMenu()}
+      
+      <CreateCourseModal
+         isOpen={isCreateCourseModalOpen}
+         onClose={() => setIsCreateCourseModalOpen(false)}
+         onCreateCourse={handleCreateCourseSubmit}
+       />
     </>
   );
 };

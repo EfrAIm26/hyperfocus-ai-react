@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../supabaseClient'
 import styles from './ChatWindow.module.css'
@@ -14,15 +14,17 @@ interface ChatWindowProps {
   user: User
   selectedChatId?: string
   onNewChat?: () => void
+  onSendMessage?: (message: string, chatId?: string) => Promise<string | null>
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat, onSendMessage }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState('mistral-small-3.2')
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const models = [
     { value: 'mistral-small-3.2', label: 'Mistral Small 3.2' },
@@ -32,50 +34,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     { value: 'openai-gpt-5-nano', label: 'OpenAI GPT-5 Nano' }
   ]
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  useEffect(() => {
-    // Initialize a new chat when component mounts
-    if (!selectedChatId) {
-      initializeNewChat()
+  // Define all callback functions first to avoid initialization errors
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      container.scrollTop = container.scrollHeight
     }
-  }, [user])
+  }, [])
 
-  useEffect(() => {
-    // Load messages when a chat is selected
-    if (selectedChatId) {
-      loadChatMessages(selectedChatId)
-      setCurrentChatId(selectedChatId)
-    }
-  }, [selectedChatId])
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  const initializeNewChat = async () => {
+  const initializeNewChat = useCallback(async () => {
     if (!user?.id) return
 
     try {
-      const { data: chat, error } = await supabase
-        .from('chats')
-        .insert({
-          user_id: user.id,
-          title: 'New Chat',
-          model: selectedModel,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating chat:', error)
-        return
-      }
-
-      setCurrentChatId(chat.id)
+      setCurrentChatId(null)
       setMessages([])
       
       // Notify parent component about new chat
@@ -85,15 +56,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     } catch (error) {
       console.error('Error initializing chat:', error)
     }
-  }
+  }, [user?.id, onNewChat])
 
-  const handleNewChat = () => {
-    setMessages([])
-    setCurrentChatId(null)
-    initializeNewChat()
-  }
-
-  const loadChatMessages = async (chatId: string) => {
+  const loadChatMessages = useCallback(async (chatId: string) => {
     try {
       const { data: messagesData, error } = await supabase
         .from('messages')
@@ -117,7 +82,39 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     } catch (error) {
       console.error('Error loading chat messages:', error)
     }
-  }
+  }, [])
+
+  const handleNewChat = useCallback(() => {
+    setMessages([])
+    setCurrentChatId(null)
+    initializeNewChat()
+  }, [initializeNewChat])
+
+  // useEffect hooks after function definitions
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    // Use setTimeout to ensure DOM has updated
+    const timer = setTimeout(() => {
+      scrollToBottom()
+    }, 100)
+    
+    return () => clearTimeout(timer)
+  }, [messages, scrollToBottom])
+
+  useEffect(() => {
+    // Initialize a new chat when component mounts
+    if (!selectedChatId) {
+      initializeNewChat()
+    }
+  }, [selectedChatId, initializeNewChat])
+
+  useEffect(() => {
+    // Load messages when a chat is selected
+    if (selectedChatId) {
+      loadChatMessages(selectedChatId)
+      setCurrentChatId(selectedChatId)
+    }
+  }, [selectedChatId, loadChatMessages])
 
   const saveMessageToSupabase = async (message: Omit<Message, 'id'>, chatId: string) => {
     try {
@@ -159,7 +156,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   }
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || !currentChatId) return
+    if (!inputMessage.trim() || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -170,18 +167,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
 
     const currentMessages = [...messages, userMessage]
     setMessages(currentMessages)
+    const messageContent = inputMessage.trim()
     setInputMessage('')
     setIsLoading(true)
 
-    // Save user message to Supabase
-    await saveMessageToSupabase(userMessage, currentChatId)
-
-    // Update chat title if this is the first message
-    if (messages.length === 0) {
-      await updateChatTitle(currentChatId, userMessage.content)
-    }
-
     try {
+      // Use centralized function to handle chat creation and get chat ID
+      let chatId = currentChatId
+      if (onSendMessage) {
+        chatId = await onSendMessage(messageContent, currentChatId)
+        if (chatId && chatId !== currentChatId) {
+          setCurrentChatId(chatId)
+        }
+      }
+
+      if (!chatId) {
+        throw new Error('Failed to create or get chat ID')
+      }
+
+      // Save user message to Supabase
+      await saveMessageToSupabase(userMessage, chatId)
+
+      // Update chat title if this is the first message
+      if (messages.length === 0) {
+        await updateChatTitle(chatId, userMessage.content)
+      }
       const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
       
       if (!apiKey) {
@@ -225,7 +235,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       setMessages(prev => [...prev, assistantMessage])
       
       // Save assistant message to Supabase
-      await saveMessageToSupabase(assistantMessage, currentChatId)
+      await saveMessageToSupabase(assistantMessage, chatId)
+      
+      // Ensure scroll to bottom after assistant message
+      setTimeout(() => scrollToBottom(), 100)
 
     } catch (error) {
       console.error('Error sending message:', error)
@@ -238,6 +251,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       }
       
       setMessages(prev => [...prev, errorMessage])
+      
+      // Ensure scroll to bottom after error message
+      setTimeout(() => scrollToBottom(), 100)
     } finally {
       setIsLoading(false)
     }
@@ -286,7 +302,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         </div>
       </div>
       
-      <div className={styles.messagesContainer}>
+      <div className={styles.messagesContainer} ref={messagesContainerRef}>
         {messages.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>🧠</div>

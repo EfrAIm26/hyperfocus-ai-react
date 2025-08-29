@@ -11,14 +11,54 @@ interface UserProfile {
   email: string
 }
 
-interface AppLayoutProps {
-  user: User
+interface Course {
+  id: string
+  name: string
+  color: string
+  emoji: string
+  user_id: string
+  created_at: string
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
+interface Chat {
+  id: string
+  title: string
+  topic_id?: string
+  course_id?: string
+  user_id: string
+  created_at: string
+}
+
+interface AppLayoutProps {
+  user: User
+  courses: Course[]
+  chats: Chat[]
+  selectedChatId?: string
+  // refreshTrigger removed to fix infinite re-render loop
+  onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>
+  onChatSelect: (chatId: string) => void
+  onNewChat: () => void
+  onSendMessage: (message: string, chatId?: string) => Promise<string | null>
+  onRefreshData: () => void
+  setCourses: React.Dispatch<React.SetStateAction<Course[]>>
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>
+}
+
+const AppLayout: React.FC<AppLayoutProps> = ({ 
+  user, 
+  courses, 
+  chats, 
+  selectedChatId, 
+  // refreshTrigger removed 
+  onCreateCourse, 
+  onChatSelect, 
+  onNewChat, 
+  onSendMessage, 
+  onRefreshData,
+  setCourses,
+  setChats
+}) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [selectedChatId, setSelectedChatId] = useState<string | undefined>(undefined)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -63,15 +103,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
     }
   }
 
-  const handleChatSelect = (chatId: string) => {
-    setSelectedChatId(chatId)
-  }
-
-  const handleNewChat = () => {
-    setSelectedChatId(undefined)
-    setRefreshTrigger(prev => prev + 1)
-  }
-
   return (
     <div className={styles.container}>
       {/* Header with User Profile */}
@@ -97,9 +128,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
         {/* Sidebar */}
         <Sidebar 
           user={user} 
-          onChatSelect={handleChatSelect}
+          courses={courses}
+          chats={chats}
+          onChatSelect={onChatSelect}
           selectedChatId={selectedChatId}
-          refreshTrigger={refreshTrigger}
+          // refreshTrigger prop removed
+          onCreateCourse={onCreateCourse}
+          onRefreshData={onRefreshData}
+          setCourses={setCourses}
+          setChats={setChats}
         />
 
         {/* Main Content Area */}
@@ -107,7 +144,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ user }) => {
           <ChatWindow 
             user={user} 
             selectedChatId={selectedChatId}
-            onNewChat={handleNewChat}
+            onNewChat={onNewChat}
+            onSendMessage={onSendMessage}
           />
         </div>
       </div>
