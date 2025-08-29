@@ -40,8 +40,6 @@ interface SidebarProps {
   // refreshTrigger removed to fix infinite re-render loop
   onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>;
   onRefreshData: () => void;
-  setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
 }
 
 interface ExpandedState {
@@ -56,9 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedChatId, 
   // refreshTrigger removed 
   onCreateCourse, 
-  onRefreshData,
-  setCourses,
-  setChats
+  onRefreshData
 }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);

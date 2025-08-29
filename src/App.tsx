@@ -98,7 +98,7 @@ const AppContent = () => {
       .channel('courses_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'courses', filter: `user_id=eq.${user.id}` },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             setCourses(prev => [...prev, payload.new as Course])
           } else if (payload.eventType === 'UPDATE') {
@@ -116,7 +116,7 @@ const AppContent = () => {
       .channel('chats_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'chats', filter: `user_id=eq.${user.id}` },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'INSERT') {
             setChats(prev => [payload.new as Chat, ...prev])
           } else if (payload.eventType === 'UPDATE') {
@@ -169,7 +169,7 @@ const AppContent = () => {
     setSelectedChatId(undefined)
   }, [])
 
-  const handleSendMessage = useCallback(async (message: string, chatId?: string) => {
+  const handleSendMessage = useCallback(async (message: string, chatId?: string): Promise<string | null> => {
     if (!user) return null
 
     let currentChatId = chatId
@@ -195,7 +195,7 @@ const AppContent = () => {
       setSelectedChatId(currentChatId)
     }
 
-    return currentChatId
+    return currentChatId || null
   }, [user])
 
   const refreshData = useCallback(async () => {
@@ -261,8 +261,6 @@ const AppContent = () => {
                   onNewChat={handleNewChat}
                   onSendMessage={handleSendMessage}
                   onRefreshData={refreshData}
-                  setCourses={setCourses}
-                  setChats={setChats}
                 />
               )
             ) : (

@@ -175,7 +175,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       // Use centralized function to handle chat creation and get chat ID
       let chatId = currentChatId
       if (onSendMessage) {
-        chatId = await onSendMessage(messageContent, currentChatId)
+        chatId = await onSendMessage(messageContent, currentChatId || undefined)
         if (chatId && chatId !== currentChatId) {
           setCurrentChatId(chatId)
         }

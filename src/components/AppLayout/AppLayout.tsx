@@ -40,8 +40,6 @@ interface AppLayoutProps {
   onNewChat: () => void
   onSendMessage: (message: string, chatId?: string) => Promise<string | null>
   onRefreshData: () => void
-  setCourses: React.Dispatch<React.SetStateAction<Course[]>>
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ 
@@ -54,9 +52,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onChatSelect, 
   onNewChat, 
   onSendMessage, 
-  onRefreshData,
-  setCourses,
-  setChats
+  onRefreshData
 }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
@@ -135,8 +131,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           // refreshTrigger prop removed
           onCreateCourse={onCreateCourse}
           onRefreshData={onRefreshData}
-          setCourses={setCourses}
-          setChats={setChats}
         />
 
         {/* Main Content Area */}
