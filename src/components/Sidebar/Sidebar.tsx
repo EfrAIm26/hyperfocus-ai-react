@@ -496,30 +496,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
           
-          {/* Chats sin curso ni tema */}
-          {chats.filter(c => !c.course_id && !c.topic_id).map(chat => (
-            <div 
-              key={chat.id} 
-              className={`${styles.chatItem} ${selectedChatId === chat.id ? styles.selected : ''}`}
-              onClick={() => onChatSelect(chat.id)}
-            >
-              <span className={styles.chatIcon}>💬</span>
-              {editingItem?.type === 'chat' && editingItem.id === chat.id ? (
-                renderEditInput(editingItem)
-              ) : (
-                <span className={styles.itemName}>{chat.title}</span>
-              )}
-              <button 
-                className={styles.contextMenuButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleContextMenu(e, 'chat', chat.id);
-                }}
-              >
-                ⋯
-              </button>
-            </div>
-          ))}
+
         </div>
         
         <div 

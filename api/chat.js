@@ -16,8 +16,9 @@ export default async function handler(req, res) {
     const modelMap = {
       'mistral-small-3.2': 'mistralai/mistral-7b-instruct',
       'llama-3-8b': 'meta-llama/llama-3-8b-instruct',
-      'grok-4': 'x-ai/grok-beta',
-      'claude-4-sonnet': 'anthropic/claude-3-sonnet',
+      'x-ai/grok-2-mini': 'x-ai/grok-2-mini',
+      'anthropic/claude-3.5-sonnet': 'anthropic/claude-3.5-sonnet',
+      'google/gemini-2.5-flash-lite': 'google/gemini-2.5-flash-lite',
       'openai-gpt-5-nano': 'openai/gpt-4-turbo'
     };
 

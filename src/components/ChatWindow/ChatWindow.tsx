@@ -29,8 +29,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   const models = [
     { value: 'mistral-small-3.2', label: 'Mistral Small 3.2' },
     { value: 'llama-3-8b', label: 'Llama 3 8B' },
-    { value: 'grok-4', label: 'Grok-4' },
-    { value: 'claude-4-sonnet', label: 'Claude-4-Sonnet' },
+    { value: 'x-ai/grok-2-mini', label: 'Grok 2 Mini' },
+    { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
+    { value: 'google/gemini-2.5-flash-lite', label: 'Google: Gemini 2.5 Flash Lite' },
     { value: 'openai-gpt-5-nano', label: 'OpenAI GPT-5 Nano' }
   ]
 
