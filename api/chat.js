@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   try {
     const { messages, model } = req.body;
-    const apiKey = process.env.VITE_OPENROUTER_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       return res.status(500).json({ error: 'API key not configured' });
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:5173',
+        'HTTP-Referer': req.headers.origin || req.headers.referer || 'https://hyperfocus-ai.vercel.app',
         'X-Title': 'Hyperfocus AI'
       },
       body: JSON.stringify({

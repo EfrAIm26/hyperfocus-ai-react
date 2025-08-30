@@ -192,29 +192,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       if (messages.length === 0) {
         await updateChatTitle(chatId, userMessage.content)
       }
-      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
-      
-      if (!apiKey) {
-        throw new Error('OpenRouter API key not configured')
-      }
 
-      // Use a direct API call to OpenRouter instead of local API
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Use our secure backend API endpoint
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Hyperfocus AI'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: getModelId(selectedModel),
+          model: selectedModel,
           messages: currentMessages.map(msg => ({
             role: msg.role,
             content: msg.content
-          })),
-          temperature: 0.7,
-          max_tokens: 1000
+          }))
         })
       })
 
@@ -259,16 +249,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     }
   }
 
-  const getModelId = (model: string) => {
-    const modelMap: { [key: string]: string } = {
-      'mistral-small-3.2': 'mistralai/mistral-7b-instruct',
-      'llama-3-8b': 'meta-llama/llama-3-8b-instruct',
-      'grok-4': 'x-ai/grok-beta',
-      'claude-4-sonnet': 'anthropic/claude-3-sonnet',
-      'openai-gpt-5-nano': 'openai/gpt-4-turbo'
-    }
-    return modelMap[model] || modelMap['mistral-small-3.2']
-  }
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
