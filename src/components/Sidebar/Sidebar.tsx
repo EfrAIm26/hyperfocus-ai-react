@@ -233,7 +233,26 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleDelete = async (type: string, id: string) => {
+    // Show confirmation dialog
+    const confirmMessage = type === 'chat' 
+      ? 'Are you sure you want to delete this chat? All messages will be permanently lost.'
+      : `Are you sure you want to delete this ${type}?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
     try {
+      if (type === 'chat') {
+        // First delete all messages associated with the chat
+        const { error: messagesError } = await supabase
+          .from('messages')
+          .delete()
+          .eq('chat_id', id);
+        
+        if (messagesError) throw messagesError;
+      }
+      
       const table = type === 'course' ? 'courses' : type === 'topic' ? 'topics' : 'chats';
       
       const { error } = await supabase
@@ -242,8 +261,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         .eq('id', id);
       
       if (error) throw error;
+      
+      // If we deleted the currently selected chat, clear the selection
+      if (type === 'chat' && selectedChatId === id) {
+        // Clear the current chat selection by calling onNewChat if available
+        // This will be handled by the parent component
+      }
     } catch (error) {
       console.error('Error deleting item:', error);
+      alert('Error deleting item. Please try again.');
     }
   };
 
@@ -298,8 +324,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
         {type === 'chat' && (
           <>
-            <button onClick={() => { setEditingItem({ type, id, name: chats.find(c => c.id === id)?.title || '' }); setShowContextMenu(null); }}>✏️ Renombrar</button>
-            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Eliminar</button>
+            <button onClick={() => { setEditingItem({ type, id, name: chats.find(c => c.id === id)?.title || '' }); setShowContextMenu(null); }}>✏️ Rename</button>
+            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Delete</button>
           </>
         )}
       </div>
@@ -328,7 +354,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   if (loading) {
     return (
       <div className={styles.sidebar} style={{ width: sidebarWidth }}>
-        <div className={styles.loading}>Cargando...</div>
+        <div className={styles.loading}>Loading...</div>
       </div>
     );
   }
@@ -339,7 +365,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className={styles.header}>
           <h3>📚 Hyperfocus AI</h3>
           <button className={styles.newCourseButton} onClick={handleCreateCourseClick}>
-            ➕ Nuevo Curso
+            ➕ New Course
           </button>
         </div>
         

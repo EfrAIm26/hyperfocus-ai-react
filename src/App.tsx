@@ -176,10 +176,15 @@ const AppContent = () => {
 
     // Create new chat if none exists
     if (!currentChatId) {
+      // Generate title from first 4-5 words of the message
+      const words = message.trim().split(/\s+/)
+      const titleWords = words.slice(0, 5)
+      const title = titleWords.join(' ') + (words.length > 5 ? '...' : '')
+      
       const { data: newChat, error: chatError } = await supabase
         .from('chats')
         .insert({
-          title: message.slice(0, 50) + (message.length > 50 ? '...' : ''),
+          title: title,
           user_id: user.id
         })
         .select()

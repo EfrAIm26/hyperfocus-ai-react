@@ -138,10 +138,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
 
   const updateChatTitle = async (chatId: string, firstMessage: string) => {
     try {
-      // Generate title from first message (first 50 characters)
-      const title = firstMessage.length > 50 
-        ? firstMessage.substring(0, 50) + '...'
-        : firstMessage
+      // Generate title from first 4-5 words of the message
+      const words = firstMessage.trim().split(/\s+/)
+      const titleWords = words.slice(0, 5)
+      const title = titleWords.join(' ') + (words.length > 5 ? '...' : '')
 
       const { error } = await supabase
         .from('chats')
