@@ -364,3 +364,88 @@
     font-size: 1.25rem;
   }
 }
+
+/* Markdown Styles for Assistant Messages */
+.messageContent :global(h1),
+.messageContent :global(h2),
+.messageContent :global(h3),
+.messageContent :global(h4),
+.messageContent :global(h5),
+.messageContent :global(h6) {
+  color: #e2e8f0;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+
+.messageContent :global(h1) { font-size: 1.5rem; }
+.messageContent :global(h2) { font-size: 1.25rem; }
+.messageContent :global(h3) { font-size: 1.125rem; }
+
+.messageContent :global(p) {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.messageContent :global(strong) {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.messageContent :global(em) {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.messageContent :global(ul),
+.messageContent :global(ol) {
+  margin: 12px 0;
+  padding-left: 20px;
+}
+
+.messageContent :global(li) {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.messageContent :global(code) {
+  background: rgba(30, 41, 59, 0.8);
+  color: #06b6d4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+}
+
+.messageContent :global(pre) {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.messageContent :global(pre code) {
+  background: none;
+  padding: 0;
+  color: #e2e8f0;
+}
+
+.messageContent :global(blockquote) {
+  border-left: 4px solid #06b6d4;
+  padding-left: 16px;
+  margin: 12px 0;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.messageContent :global(a) {
+  color: #06b6d4;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.messageContent :global(a:hover) {
+  border-bottom-color: #06b6d4;
+}

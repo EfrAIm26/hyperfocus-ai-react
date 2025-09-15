@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../supabaseClient'
+import ReactMarkdown from 'react-markdown'
 import styles from './ChatWindow.module.css'
 
 interface Message {
@@ -324,7 +325,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
                 className={`${styles.message} ${message.role === 'user' ? styles.userMessage : styles.botMessage}`}
               >
                 <div className={styles.messageContent}>
-                  {message.content}
+                  {message.role === 'assistant' ? (
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  ) : (
+                    message.content
+                  )}
                 </div>
                 <div className={styles.messageTime}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

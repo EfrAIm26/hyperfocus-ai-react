@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../supabaseClient';
 import CreateCourseModal from '../CreateCourseModal/CreateCourseModal';
+import Modal from '../Modal/Modal';
 import styles from './Sidebar.module.css';
 
 interface Course {
@@ -63,6 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{ type: string; id: string; x: number; y: number } | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: string; id: string; name: string } | null>(null);
   const [editingItem, setEditingItem] = useState<{ type: string; id: string; name: string } | null>(null);
 
   useEffect(() => {
@@ -226,22 +228,31 @@ const Sidebar: React.FC<SidebarProps> = ({
         .eq('id', id);
       
       if (error) throw error;
+      
+      // Refresh data to update the UI
+      onRefreshData();
       setEditingItem(null);
     } catch (error) {
       console.error('Error renaming item:', error);
     }
   };
 
-  const handleDelete = async (type: string, id: string) => {
-    // Show confirmation dialog
-    const confirmMessage = type === 'chat' 
-      ? 'Are you sure you want to delete this chat? All messages will be permanently lost.'
-      : `Are you sure you want to delete this ${type}?`;
+  const handleDelete = (type: string, id: string) => {
+    const item = type === 'chat' 
+      ? chats.find(c => c.id === id)
+      : type === 'course' 
+      ? courses.find(c => c.id === id)
+      : topics.find(t => t.id === id);
     
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
+    const name = type === 'chat' ? item?.title : item?.name;
+    setDeleteConfirmation({ type, id, name: name || 'Unknown' });
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteConfirmation) return;
+    
+    const { type, id } = deleteConfirmation;
+    
     try {
       if (type === 'chat') {
         // First delete all messages associated with the chat
@@ -262,11 +273,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       if (error) throw error;
       
+      // Refresh data to update the UI
+      onRefreshData();
+      
       // If we deleted the currently selected chat, clear the selection
       if (type === 'chat' && selectedChatId === id) {
         // Clear the current chat selection by calling onNewChat if available
         // This will be handled by the parent component
       }
+      
+      setDeleteConfirmation(null);
     } catch (error) {
       console.error('Error deleting item:', error);
       alert('Error deleting item. Please try again.');
@@ -538,6 +554,49 @@ const Sidebar: React.FC<SidebarProps> = ({
          onClose={() => setIsCreateCourseModalOpen(false)}
          onCreateCourse={handleCreateCourseSubmit}
        />
+      
+      <Modal
+        isOpen={!!deleteConfirmation}
+        onClose={() => setDeleteConfirmation(null)}
+        title="Confirm Deletion"
+      >
+        <div style={{ padding: '20px' }}>
+          <p style={{ marginBottom: '20px', color: '#e2e8f0' }}>
+            {deleteConfirmation?.type === 'chat' 
+              ? `Are you sure you want to delete the chat "${deleteConfirmation.name}"? All messages will be permanently lost.`
+              : `Are you sure you want to delete "${deleteConfirmation?.name}"?`
+            }
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <button 
+              onClick={() => setDeleteConfirmation(null)}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #475569',
+                background: 'transparent',
+                color: '#e2e8f0',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={confirmDelete}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                background: '#dc2626',
+                color: 'white',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };
