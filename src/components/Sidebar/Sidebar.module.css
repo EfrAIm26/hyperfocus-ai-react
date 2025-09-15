@@ -254,7 +254,7 @@
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 3px;
-  opacity: 0;
+  opacity: 0.7;
   transition: all 0.2s ease;
   font-size: 1rem;
   width: 24px;

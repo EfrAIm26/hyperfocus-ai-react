@@ -402,7 +402,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onChatSelect(chat.id)}
               >
                 <span className={styles.chatIcon}>💬</span>
-                <span className={styles.chatTitle}>{chat.title}</span>
+                {editingItem && editingItem.type === 'chat' && editingItem.id === chat.id ? (
+                  renderEditInput(editingItem)
+                ) : (
+                  <span className={styles.chatTitle}>{chat.title}</span>
+                )}
                 <button 
                   className={styles.contextMenuButton}
                   onClick={(e) => {
