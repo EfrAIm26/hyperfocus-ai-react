@@ -264,16 +264,39 @@
   justify-content: center;
   flex-shrink: 0;
   margin-top: 0.1rem;
+  min-width: 24px;
+  min-height: 24px;
+  line-height: 1;
+  font-weight: bold;
 }
 
+/* CRÍTICO: Añade TODOS estos selectores de hover */
 .itemHeader:hover .contextMenuButton,
-.chatItem:hover .contextMenuButton {
+.chatItem:hover .contextMenuButton,
+.historyItem:hover .contextMenuButton {
   opacity: 1;
 }
 
 .contextMenuButton:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #e2e8f0;
+}
+
+/* Forzar visibilidad cuando el menú está abierto */
+.contextMenuButton:focus,
+.contextMenuButton:active {
+  opacity: 1;
+}
+
+/* Estado seleccionado - mostrar siempre el botón */
+.historyItem.selected .contextMenuButton,
+.chatItem.selected .contextMenuButton {
+  opacity: 0.7;
+}
+
+.historyItem.selected:hover .contextMenuButton,
+.chatItem.selected:hover .contextMenuButton {
+  opacity: 1;
 }
 
 .nestedContent {
