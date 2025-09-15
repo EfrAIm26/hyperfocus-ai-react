@@ -238,14 +238,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleDelete = (type: string, id: string) => {
-    const item = type === 'chat' 
-      ? chats.find(c => c.id === id)
-      : type === 'course' 
-      ? courses.find(c => c.id === id)
-      : topics.find(t => t.id === id);
+    let name = 'Unknown';
     
-    const name = type === 'chat' ? item?.title : item?.name;
-    setDeleteConfirmation({ type, id, name: name || 'Unknown' });
+    if (type === 'chat') {
+      const chat = chats.find(c => c.id === id);
+      name = chat?.title || 'Unknown';
+    } else if (type === 'course') {
+      const course = courses.find(c => c.id === id);
+      name = course?.name || 'Unknown';
+    } else {
+      const topic = topics.find(t => t.id === id);
+      name = topic?.name || 'Unknown';
+    }
+    
+    setDeleteConfirmation({ type, id, name });
   };
 
   const confirmDelete = async () => {
