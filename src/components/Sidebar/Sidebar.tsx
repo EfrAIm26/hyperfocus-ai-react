@@ -346,8 +346,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
         {type === 'chat' && (
           <>
-            <button onClick={() => { setEditingItem({ type, id, name: chats.find(c => c.id === id)?.title || '' }); setShowContextMenu(null); }}>✏️ Rename</button>
-            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Delete</button>
+            <button onClick={() => { setEditingItem({ type, id, name: chats.find(c => c.id === id)?.title || '' }); setShowContextMenu(null); }}>✏️ Renombrar</button>
+            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Eliminar</button>
           </>
         )}
       </div>
