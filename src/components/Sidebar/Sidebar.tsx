@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../supabaseClient';
 import CreateCourseModal from '../CreateCourseModal/CreateCourseModal';
 import Modal from '../Modal/Modal';
+import Dropdown from '../Common/Dropdown';
 import styles from './Sidebar.module.css';
 
 interface Course {
@@ -66,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [topics, setTopics] = useState<Topic[]>([]);
   const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{ type: string; id: string; x: number; y: number } | null>(null);
@@ -100,10 +101,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const fetchData = async (isInitialLoad = false) => {
     try {
-      if (isInitialLoad) {
-        setLoading(true);
-      }
-      
       // Fetch topics (courses and chats are handled by App.tsx)
       const { data: topicsData, error: topicsError } = await supabase
         .from('topics')
@@ -116,10 +113,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       
     } catch (error) {
       console.error('Error fetching data:', error);
-    } finally {
-      if (isInitialLoad) {
-        setLoading(false);
-      }
     }
   };
 
@@ -343,44 +336,40 @@ const Sidebar: React.FC<SidebarProps> = ({
     document.addEventListener('mouseup', handleResizeEnd);
   };
 
-  const renderContextMenu = () => {
-    if (!showContextMenu) return null;
+  const getContextMenuItems = () => {
+    if (!showContextMenu) return [];
     
     const { type, id } = showContextMenu;
     
-    return (
-      <div 
-        className={styles.contextMenu}
-        style={{ left: showContextMenu.x, top: showContextMenu.y }}
-        onMouseLeave={() => setShowContextMenu(null)}
-      >
-        {type === 'course' && (
-          <>
-            <button onClick={() => { handleCreateTopic(id); setShowContextMenu(null); }}>➕ Añadir Tema</button>
-            <button onClick={() => { handleCreateChat(undefined, id); setShowContextMenu(null); }}>💬 Añadir Chat</button>
-            <button onClick={() => { setEditingItem({ type, id, name: courses.find(c => c.id === id)?.name || '' }); setShowContextMenu(null); }}>✏️ Renombrar</button>
-            <button onClick={() => { /* TODO: Color picker */ setShowContextMenu(null); }}>🎨 Cambiar Color</button>
-            <button onClick={() => { /* TODO: Emoji picker */ setShowContextMenu(null); }}>😀 Cambiar Icono</button>
-            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Eliminar</button>
-          </>
-        )}
-        {type === 'topic' && (
-          <>
-            <button onClick={() => { handleCreateChat(id); setShowContextMenu(null); }}>💬 Añadir Chat</button>
-            <button onClick={() => { setEditingItem({ type, id, name: topics.find(t => t.id === id)?.name || '' }); setShowContextMenu(null); }}>✏️ Renombrar</button>
-            <button onClick={() => { /* TODO: Color picker */ setShowContextMenu(null); }}>🎨 Cambiar Color</button>
-            <button onClick={() => { /* TODO: Emoji picker */ setShowContextMenu(null); }}>😀 Cambiar Icono</button>
-            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Eliminar</button>
-          </>
-        )}
-        {type === 'chat' && (
-          <>
-            <button onClick={() => { setEditingItem({ type, id, name: chats.find(c => c.id === id)?.title || '' }); setShowContextMenu(null); }}>✏️ Renombrar</button>
-            <button onClick={() => { handleDelete(type, id); setShowContextMenu(null); }} className={styles.deleteButton}>🗑️ Eliminar</button>
-          </>
-        )}
-      </div>
-    );
+    if (type === 'course') {
+      return [
+        { label: 'Añadir Tema', icon: '➕', onClick: () => handleCreateTopic(id) },
+        { label: 'Añadir Chat', icon: '💬', onClick: () => handleCreateChat(undefined, id) },
+        { label: 'Renombrar', icon: '✏️', onClick: () => setEditingItem({ type, id, name: courses.find(c => c.id === id)?.name || '' }) },
+        { label: 'Cambiar Color', icon: '🎨', onClick: () => { /* TODO: Color picker */ } },
+        { label: 'Cambiar Icono', icon: '😀', onClick: () => { /* TODO: Emoji picker */ } },
+        { label: 'Eliminar', icon: '🗑️', onClick: () => handleDelete(type, id), variant: 'danger' as const }
+      ];
+    }
+    
+    if (type === 'topic') {
+      return [
+        { label: 'Añadir Chat', icon: '💬', onClick: () => handleCreateChat(id) },
+        { label: 'Renombrar', icon: '✏️', onClick: () => setEditingItem({ type, id, name: topics.find(t => t.id === id)?.name || '' }) },
+        { label: 'Cambiar Color', icon: '🎨', onClick: () => { /* TODO: Color picker */ } },
+        { label: 'Cambiar Icono', icon: '😀', onClick: () => { /* TODO: Emoji picker */ } },
+        { label: 'Eliminar', icon: '🗑️', onClick: () => handleDelete(type, id), variant: 'danger' as const }
+      ];
+    }
+    
+    if (type === 'chat') {
+      return [
+        { label: 'Renombrar', icon: '✏️', onClick: () => setEditingItem({ type, id, name: chats.find(c => c.id === id)?.title || '' }) },
+        { label: 'Eliminar', icon: '🗑️', onClick: () => handleDelete(type, id), variant: 'danger' as const }
+      ];
+    }
+    
+    return [];
   };
 
   const renderEditInput = (item: { type: string; id: string; name: string }) => {
@@ -402,20 +391,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  if (loading) {
-    return (
-      <div className={styles.sidebar} style={{ width: sidebarWidth }}>
-        <div className={styles.loading}>Loading...</div>
-      </div>
-    );
-  }
+  // Loading state removed - sidebar renders immediately
 
   return (
     <>
       <div className={styles.sidebar} style={{ width: sidebarWidth }}>
         <div className={styles.header}>
           <div className={styles.logoContainer}>
-            <img src="./logo_blue.png" alt="Hyperfocus AI" className={styles.logo} />
+            <img src="/logo_color.png" alt="Hyperfocus AI" className={styles.logo} />
           </div>
           <button className={styles.newCourseButton} onClick={handleCreateCourseClick}>
             ➕ New Course
@@ -606,7 +589,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         />
       </div>
       
-      {renderContextMenu()}
+      <Dropdown
+          isOpen={!!showContextMenu}
+          onClose={() => setShowContextMenu(null)}
+          position={showContextMenu ? { x: showContextMenu.x, y: showContextMenu.y } : { x: 0, y: 0 }}
+          items={getContextMenuItems()}
+        />
       
       <CreateCourseModal
          isOpen={isCreateCourseModalOpen}
