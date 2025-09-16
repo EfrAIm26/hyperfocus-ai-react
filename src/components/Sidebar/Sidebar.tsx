@@ -32,6 +32,12 @@ interface Chat {
   created_at: string;
 }
 
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
 interface SidebarProps {
   user: User;
   courses: Course[];
@@ -66,10 +72,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [showContextMenu, setShowContextMenu] = useState<{ type: string; id: string; x: number; y: number } | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: string; id: string; name: string } | null>(null);
   const [editingItem, setEditingItem] = useState<{ type: string; id: string; name: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    fetchData();
+    fetchData(true); // Initial load with loading state
     setupRealtimeSubscriptions();
+    fetchUserProfile();
     
     // Restore sidebar width from localStorage
     const savedWidth = localStorage.getItem('sidebarWidth');
@@ -90,14 +98,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [user.id, showContextMenu]); // refreshTrigger removed from dependencies
 
-  const fetchData = async () => {
+  const fetchData = async (isInitialLoad = false) => {
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setLoading(true);
+      }
       
-      // Use centralized refresh function for courses and chats
-      onRefreshData();
-      
-      // Fetch topics (still local to Sidebar)
+      // Fetch topics (courses and chats are handled by App.tsx)
       const { data: topicsData, error: topicsError } = await supabase
         .from('topics')
         .select('*')
@@ -110,42 +117,64 @@ const Sidebar: React.FC<SidebarProps> = ({
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    if (!user?.id) return;
+
+    try {
+      // First try to get from profiles table
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+      }
+
+      // Use profile data if available, otherwise fallback to user metadata
+      setUserProfile({
+        id: user.id,
+        full_name: profile?.full_name || user?.user_metadata?.full_name || null,
+        email: profile?.email || user?.email || 'User'
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Fallback to user metadata
+      setUserProfile({
+        id: user.id,
+        full_name: user?.user_metadata?.full_name || null,
+        email: user?.email || 'User'
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error logging out:', error);
     }
   };
 
   const setupRealtimeSubscriptions = () => {
-    // Subscribe to courses changes
-    const coursesSubscription = supabase
-      .channel('courses_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'courses', filter: `user_id=eq.${user.id}` },
-        () => onRefreshData()
-      )
-      .subscribe();
-
-    // Subscribe to topics changes
+    // Only subscribe to topics changes (courses and chats are handled by App.tsx)
     const topicsSubscription = supabase
       .channel('topics_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'topics' },
-        () => fetchData()
-      )
-      .subscribe();
-
-    // Subscribe to chats changes
-    const chatsSubscription = supabase
-      .channel('chats_changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'chats', filter: `user_id=eq.${user.id}` },
-        () => onRefreshData()
+        () => fetchData(false) // Realtime updates without loading state
       )
       .subscribe();
 
     return () => {
-      coursesSubscription.unsubscribe();
       topicsSubscription.unsubscribe();
-      chatsSubscription.unsubscribe();
     };
   };
 
@@ -385,7 +414,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       <div className={styles.sidebar} style={{ width: sidebarWidth }}>
         <div className={styles.header}>
-          <h3>📚 Hyperfocus AI</h3>
+          <div className={styles.logoContainer}>
+            <img src="./logo_blue.png" alt="Hyperfocus AI" className={styles.logo} />
+          </div>
           <button className={styles.newCourseButton} onClick={handleCreateCourseClick}>
             ➕ New Course
           </button>
@@ -395,7 +426,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className={styles.historySection}>
           <h4 className={styles.sectionTitle}>💬 History</h4>
           <div className={styles.historyList}>
-            {chats.filter(c => !c.course_id && !c.topic_id).slice(0, 10).map(chat => (
+            {chats.filter(c => !c.course_id && !c.topic_id).map(chat => (
               <div 
                 key={chat.id} 
                 className={`${styles.historyItem} ${selectedChatId === chat.id ? styles.selected : ''}`}
@@ -549,6 +580,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           })}
           
 
+        </div>
+        
+        {/* User Profile Section */}
+        <div className={styles.userProfileSection}>
+          <div className={styles.userProfile}>
+            <div className={styles.avatar}></div>
+            <div className={styles.userInfo}>
+              <div className={styles.userName}>
+                {userProfile?.full_name || 'Usuario'}
+              </div>
+              <div className={styles.userEmail}>
+                {userProfile?.email}
+              </div>
+            </div>
+          </div>
+          <button className={styles.logoutButton} onClick={handleLogout}>
+            🚪
+          </button>
         </div>
         
         <div 
