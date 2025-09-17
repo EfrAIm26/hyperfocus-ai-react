@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [topics, setTopics] = useState<Topic[]>([]);
   const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [loading, setLoading] = useState(false);
+
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState<{ type: string; id: string; x: number; y: number } | null>(null);
@@ -76,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    fetchData(true); // Initial load with loading state
+    fetchData(); // Initial load
     setupRealtimeSubscriptions();
     fetchUserProfile();
     
@@ -99,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [user.id, showContextMenu]); // refreshTrigger removed from dependencies
 
-  const fetchData = async (isInitialLoad = false) => {
+  const fetchData = async () => {
     try {
       // Fetch topics (courses and chats are handled by App.tsx)
       const { data: topicsData, error: topicsError } = await supabase
@@ -162,7 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       .channel('topics_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'topics' },
-        () => fetchData(false) // Realtime updates without loading state
+        () => fetchData() // Realtime updates
       )
       .subscribe();
 
