@@ -183,10 +183,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     setShowContextMenu({ type, id, x: e.clientX, y: e.clientY });
   };
 
-  const handleCreateCourseClick = () => {
-    setIsCreateCourseModalOpen(true);
-  };
-
   const handleCreateCourseSubmit = async (courseData: { name: string; emoji: string; color: string }) => {
     await onCreateCourse(courseData);
     setIsCreateCourseModalOpen(false);

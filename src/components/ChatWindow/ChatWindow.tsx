@@ -141,11 +141,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     }
   }, [user.id])
 
-  const handleNewChat = useCallback(() => {
-    setMessages([])
-    setCurrentChatId(null)
-    initializeNewChat()
-  }, [initializeNewChat])
+
 
   // useEffect hooks after function definitions
   // Scroll to bottom when messages change
