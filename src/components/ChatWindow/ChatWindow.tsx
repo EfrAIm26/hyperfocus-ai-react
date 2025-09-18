@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../supabaseClient'
 import ReactMarkdown from 'react-markdown'
+import ThinkingIndicator from '../ThinkingIndicator'
 import styles from './ChatWindow.module.css'
 
 interface Message {
@@ -222,18 +223,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
 
+    const messageContent = inputMessage.trim()
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: inputMessage.trim(),
+      content: messageContent,
       role: 'user',
       timestamp: new Date()
     }
 
+    // OPTIMISTIC UI: Immediately add user message and clear input
     const currentMessages = [...messages, userMessage]
     setMessages(currentMessages)
-    const messageContent = inputMessage.trim()
     setInputMessage('')
     setIsLoading(true)
+
+    // Create a temporary "thinking" message that will be replaced
+    const thinkingMessage: Message = {
+      id: 'thinking-' + Date.now(),
+      content: '__THINKING__',
+      role: 'assistant',
+      timestamp: new Date()
+    }
+    
+    // Add thinking indicator immediately
+    setMessages(prev => [...prev, thinkingMessage])
 
     try {
       // Use centralized function to handle chat creation and get chat ID
@@ -289,7 +302,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         timestamp: new Date()
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      // OPTIMISTIC UI: Replace thinking message with actual response
+      setMessages(prev => {
+        const withoutThinking = prev.filter(msg => !msg.id.startsWith('thinking-'))
+        return [...withoutThinking, assistantMessage]
+      })
       
       // Save assistant message to Supabase
       console.log('About to save assistant message:', assistantMessage.content.substring(0, 50) + '...')
@@ -302,14 +319,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     } catch (error) {
       console.error('Error sending message:', error)
       
+      // OPTIMISTIC UI: Remove thinking message and add error message
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, there was an error processing your request. Please try again.',
+        id: 'error-' + Date.now(),
+        content: 'Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.',
         role: 'assistant',
         timestamp: new Date()
       }
       
-      setMessages(prev => [...prev, errorMessage])
+      setMessages(prev => {
+        const withoutThinking = prev.filter(msg => !msg.id.startsWith('thinking-'))
+        return [...withoutThinking, errorMessage]
+      })
       
       // Ensure scroll to bottom after error message
       setTimeout(() => scrollToBottom(), 100)
@@ -354,7 +375,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       </div>
       
       <div className={styles.messagesContainer} ref={messagesContainerRef}>
-        {messages.length === 0 ? (
+        {messages.filter(msg => msg.role === 'user').length === 0 ? (
           <div className={styles.welcomeScreen}>
             <div className={styles.welcomeContent}>
               <h2 className={styles.welcomeMainTitle}>How can I help you?</h2>
@@ -396,7 +417,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
               >
                 <div className={styles.messageContent}>
                   {message.role === 'assistant' ? (
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                    message.content === '__THINKING__' ? (
+                       <ThinkingIndicator model={models.find(m => m.value === selectedModel)?.label || selectedModel} />
+                     ) : (
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    )
                   ) : (
                     message.content
                   )}
