@@ -18,12 +18,58 @@ interface ChatWindowProps {
   onSendMessage?: (message: string, chatId?: string) => Promise<string | null>
 }
 
+interface Category {
+  id: string
+  label: string
+  icon: string
+}
+
+interface ExampleQuestion {
+  id: string
+  text: string
+  category: string
+}
+
+const categories: Category[] = [
+  { id: 'create', label: 'Create', icon: '✨' },
+  { id: 'explore', label: 'Explore', icon: '🔍' },
+  { id: 'code', label: 'Code', icon: '💻' },
+  { id: 'learn', label: 'Learn', icon: '📚' }
+]
+
+const exampleQuestions: ExampleQuestion[] = [
+  // Create category
+  { id: '1', text: 'Help me create a study plan for my upcoming exams', category: 'create' },
+  { id: '2', text: 'Generate flashcards for biology concepts', category: 'create' },
+  { id: '3', text: 'Create a mind map for my history project', category: 'create' },
+  { id: '4', text: 'Design a presentation outline for my thesis', category: 'create' },
+  
+  // Explore category
+  { id: '5', text: 'Explain quantum physics in simple terms', category: 'explore' },
+  { id: '6', text: 'What are the latest developments in AI?', category: 'explore' },
+  { id: '7', text: 'How does photosynthesis work?', category: 'explore' },
+  { id: '8', text: 'Explore the history of the Renaissance', category: 'explore' },
+  
+  // Code category
+  { id: '9', text: 'Write a Python function to sort a list', category: 'code' },
+  { id: '10', text: 'Explain React hooks with examples', category: 'code' },
+  { id: '11', text: 'Debug this JavaScript code for me', category: 'code' },
+  { id: '12', text: 'Create a REST API with Node.js', category: 'code' },
+  
+  // Learn category
+  { id: '13', text: 'Teach me calculus step by step', category: 'learn' },
+  { id: '14', text: 'How can I improve my memory retention?', category: 'learn' },
+  { id: '15', text: 'Best study techniques for language learning', category: 'learn' },
+  { id: '16', text: 'Explain machine learning algorithms', category: 'learn' }
+]
+
 const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat, onSendMessage }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState('mistral-small-3.2')
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>('create')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -285,6 +331,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     }
   }
 
+  const handleQuestionClick = (question: string) => {
+    setInputMessage(question)
+  }
+
   return (
     <div className={styles.chatWindow}>
       <div className={styles.chatHeader}>
@@ -304,18 +354,42 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
               </option>
             ))}
           </select>
-          <button className={styles.newChatButton} onClick={handleNewChat}>
-            ➕ New Chat
-          </button>
         </div>
       </div>
       
       <div className={styles.messagesContainer} ref={messagesContainerRef}>
         {messages.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>🧠</div>
-            <h2>Start a conversation</h2>
-            <p>Ask me anything about your studies, and I'll help you learn more effectively.</p>
+          <div className={styles.welcomeScreen}>
+            <div className={styles.welcomeContent}>
+              <h2 className={styles.welcomeMainTitle}>How can I help you?</h2>
+              
+              <div className={styles.categoriesContainer}>
+                {categories.map(category => (
+                  <button
+                    key={category.id}
+                    className={`${styles.categoryButton} ${selectedCategory === category.id ? styles.categoryButtonActive : ''}`}
+                    onClick={() => setSelectedCategory(category.id)}
+                  >
+                    <span className={styles.categoryIcon}>{category.icon}</span>
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+              
+              <div className={styles.questionsContainer}>
+                {exampleQuestions
+                  .filter(q => q.category === selectedCategory)
+                  .map(question => (
+                    <button
+                      key={question.id}
+                      className={styles.questionButton}
+                      onClick={() => handleQuestionClick(question.text)}
+                    >
+                      {question.text}
+                    </button>
+                  ))}
+              </div>
+            </div>
           </div>
         ) : (
           <div className={styles.messagesList}>
@@ -368,7 +442,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
             onClick={sendMessage}
             disabled={!inputMessage.trim() || isLoading}
           >
-            {isLoading ? '⏳' : '📤'}
+            {isLoading ? (
+              <div className={styles.loadingSpinner}></div>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
           </button>
         </div>
       </div>

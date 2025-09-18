@@ -64,6 +64,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           // refreshTrigger prop removed
           onCreateCourse={onCreateCourse}
           onRefreshData={onRefreshData}
+          onNewChat={onNewChat}
         />
 
         {/* Main Content Area */}

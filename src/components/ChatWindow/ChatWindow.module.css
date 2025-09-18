@@ -449,3 +449,200 @@
 .messageContent :global(a:hover) {
   border-bottom-color: #06b6d4;
 }
+
+/* Welcome Screen Styles - T3.chat inspired */
+.welcomeScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+}
+
+.welcomeContent {
+  max-width: 800px;
+  width: 100%;
+}
+
+.welcomeMainTitle {
+  color: #e2e8f0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 40px 0;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.categoriesContainer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.categoryButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.categoryButton:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.categoryButtonActive {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.categoryButtonActive:hover {
+  background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+  transform: translateY(-1px);
+}
+
+.categoryIcon {
+  font-size: 1.1rem;
+}
+
+.questionsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  max-width: 100%;
+}
+
+.questionButton {
+  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  line-height: 1.4;
+}
+
+.questionButton:hover {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(6, 182, 212, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
+}
+
+/* Updated Send Button Styles */
+.sendButton {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+}
+
+.sendButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+  background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments for welcome screen */
+@media (max-width: 768px) {
+  .welcomeMainTitle {
+    font-size: 2rem;
+    margin-bottom: 32px;
+  }
+  
+  .categoriesContainer {
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  
+  .categoryButton {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+  }
+  
+  .questionsContainer {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .questionButton {
+    padding: 14px 16px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcomeScreen {
+    padding: 24px 16px;
+  }
+  
+  .welcomeMainTitle {
+    font-size: 1.75rem;
+    margin-bottom: 24px;
+  }
+  
+  .categoriesContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .categoryButton {
+    width: 100%;
+    max-width: 200px;
+    justify-content: center;
+  }
+}

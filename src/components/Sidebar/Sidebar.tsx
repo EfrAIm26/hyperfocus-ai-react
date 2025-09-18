@@ -48,6 +48,7 @@ interface SidebarProps {
   // refreshTrigger removed to fix infinite re-render loop
   onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>;
   onRefreshData: () => void;
+  onNewChat: () => void;
 }
 
 interface ExpandedState {
@@ -62,7 +63,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedChatId, 
   // refreshTrigger removed 
   onCreateCourse, 
-  onRefreshData
+  onRefreshData,
+  onNewChat
 }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [isCreateCourseModalOpen, setIsCreateCourseModalOpen] = useState(false);
@@ -400,8 +402,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={styles.logoContainer}>
             <img src="/logo_color.png" alt="Hyperfocus AI" className={styles.logo} />
           </div>
-          <button className={styles.newCourseButton} onClick={handleCreateCourseClick}>
-            ➕ New Course
+          <button className={styles.newChatButton} onClick={onNewChat}>
+            ➕ New Chat
           </button>
         </div>
         
