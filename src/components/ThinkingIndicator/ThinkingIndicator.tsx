@@ -10,11 +10,11 @@ const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({ model = 'AI' }) =
   const [currentPhrase, setCurrentPhrase] = useState(0)
   
   const thinkingPhrases = [
-    'Pensando',
-    'Analizando',
-    'Procesando',
-    'Generando respuesta',
-    'Casi listo'
+    'Thinking',
+    'Analyzing',
+    'Processing',
+    'Generating response',
+    'Almost ready'
   ]
 
   useEffect(() => {

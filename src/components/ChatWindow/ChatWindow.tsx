@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../supabaseClient'
 import ReactMarkdown from 'react-markdown'
+import { Settings } from 'lucide-react'
 import ThinkingIndicator from '../ThinkingIndicator'
 import styles from './ChatWindow.module.css'
 
@@ -17,6 +18,7 @@ interface ChatWindowProps {
   selectedChatId?: string
   onNewChat?: () => void
   onSendMessage?: (message: string, chatId?: string) => Promise<string | null>
+  onSettingsToggle?: () => void
 }
 
 interface Category {
@@ -64,7 +66,7 @@ const exampleQuestions: ExampleQuestion[] = [
   { id: '16', text: 'Explain machine learning algorithms', category: 'learn' }
 ]
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat, onSendMessage }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat, onSendMessage, onSettingsToggle }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -371,6 +373,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
               </option>
             ))}
           </select>
+          <button 
+            className={styles.settingsButton}
+            onClick={onSettingsToggle}
+            title="Settings"
+          >
+            <Settings size={20} />
+          </button>
         </div>
       </div>
       

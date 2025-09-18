@@ -2,6 +2,7 @@ import React from 'react'
 import type { User } from '@supabase/supabase-js'
 import Sidebar from '../Sidebar/Sidebar'
 import ChatWindow from '../ChatWindow/ChatWindow'
+import SettingsPanel from '../SettingsPanel'
 import styles from './AppLayout.module.css'
 
 
@@ -29,6 +30,8 @@ interface AppLayoutProps {
   courses: Course[]
   chats: Chat[]
   selectedChatId?: string
+  isSettingsPanelOpen: boolean
+  onSettingsToggle: () => void
   // refreshTrigger removed to fix infinite re-render loop
   onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>
   onChatSelect: (chatId: string) => void
@@ -41,7 +44,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   user, 
   courses, 
   chats, 
-  selectedChatId, 
+  selectedChatId,
+  isSettingsPanelOpen,
+  onSettingsToggle, 
   // refreshTrigger removed 
   onCreateCourse, 
   onChatSelect, 
@@ -68,15 +73,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         />
 
         {/* Main Content Area */}
-        <div className={styles.mainContent}>
+        <div className={`${styles.mainContent} ${isSettingsPanelOpen ? styles.withSettingsPanel : ''}`}>
           <ChatWindow 
             user={user} 
             selectedChatId={selectedChatId}
             onNewChat={onNewChat}
             onSendMessage={onSendMessage}
+            onSettingsToggle={onSettingsToggle}
           />
         </div>
       </div>
+      
+      {/* Settings Panel */}
+      <SettingsPanel 
+        isOpen={isSettingsPanelOpen}
+        onClose={onSettingsToggle}
+      />
     </div>
   )
 }

@@ -94,6 +94,24 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: margin-right 0.3s ease-in-out;
+}
+
+.mainContent.withSettingsPanel {
+  margin-right: 320px;
+}
+
+/* Responsive adjustments for settings panel */
+@media (max-width: 1200px) {
+  .mainContent.withSettingsPanel {
+    margin-right: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent.withSettingsPanel {
+    margin-right: 0;
+  }
 }
 
 .chatWindow {

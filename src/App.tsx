@@ -35,6 +35,7 @@ const AppContent = () => {
   const [courses, setCourses] = useState<Course[]>([])
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>()
+  const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(true)
 
   useEffect(() => {
     // Get initial session
@@ -257,16 +258,18 @@ const AppContent = () => {
                 <UpdatePassword />
               ) : (
                 <AppLayout 
-                  user={user}
-                  courses={courses}
-                  chats={chats}
-                  selectedChatId={selectedChatId}
-                  onCreateCourse={handleCreateCourse}
-                  onChatSelect={handleChatSelect}
-                  onNewChat={handleNewChat}
-                  onSendMessage={handleSendMessage}
-                  onRefreshData={refreshData}
-                />
+                    user={user} 
+                    courses={courses}
+                    chats={chats}
+                    selectedChatId={selectedChatId}
+                    isSettingsPanelOpen={isSettingsPanelOpen}
+                    onSettingsToggle={() => setIsSettingsPanelOpen(!isSettingsPanelOpen)}
+                    onCreateCourse={handleCreateCourse}
+                    onChatSelect={handleChatSelect}
+                    onNewChat={handleNewChat}
+                    onSendMessage={handleSendMessage}
+                    onRefreshData={refreshData}
+                  />
               )
             ) : (
               <Auth />
