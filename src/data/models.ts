@@ -74,9 +74,21 @@ export const aiModels: AIModel[] = [
     "capabilities": { "image_input": false, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
   },
   {
-    "id": "deepseek/deepseek-chat-v3-0324:free",
-    "name": "DeepSeek V3 (Free)",
+    "id": "deepseek/deepseek-r1",
+    "name": "DeepSeek R1",
     "provider": "DeepSeek",
+    "capabilities": { "image_input": true, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
+  },
+  {
+    "id": "google/gemini-2.5-flash-lite",
+    "name": "Gemini 2.5 Flash Lite",
+    "provider": "Google",
+    "capabilities": { "image_input": true, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
+  },
+  {
+    "id": "mistralai/mistral-7b-instruct",
+    "name": "Mistral 7B Instruct",
+    "provider": "Mistral",
     "capabilities": { "image_input": false, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
   }
 ];

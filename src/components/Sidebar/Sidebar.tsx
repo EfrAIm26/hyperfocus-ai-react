@@ -302,10 +302,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       // Refresh data to update the UI
       onRefreshData();
       
-      // If we deleted the currently selected chat, clear the selection
+      // If we deleted the currently selected chat, clear the selection and redirect to new chat
       if (type === 'chat' && selectedChatId === id) {
-        // Clear the current chat selection by calling onNewChat if available
-        // This will be handled by the parent component
+        onNewChat();
       }
       
       setDeleteConfirmation(null);
