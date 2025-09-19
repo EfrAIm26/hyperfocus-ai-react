@@ -1,0 +1,176 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 1px solid #333;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+  background: #1a1a1a;
+}
+
+.fileName {
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.modalActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionButton {
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionButton:hover {
+  background: #2a2a2a;
+  border-color: #555;
+  transform: translateY(-1px);
+}
+
+.closeButton {
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background: #ff4444;
+  border-color: #ff4444;
+  transform: translateY(-1px);
+}
+
+.imageContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  background: #0a0a0a;
+  min-height: 60vh;
+}
+
+.modalImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 10px;
+  }
+  
+  .modalHeader {
+    padding: 12px 16px;
+  }
+  
+  .fileName {
+    font-size: 13px;
+    max-width: 200px;
+  }
+  
+  .actionButton,
+  .closeButton {
+    padding: 6px;
+  }
+  
+  .imageContainer {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalOverlay {
+    padding: 5px;
+  }
+  
+  .modalHeader {
+    padding: 10px 12px;
+  }
+  
+  .fileName {
+    font-size: 12px;
+    max-width: 150px;
+  }
+  
+  .modalActions {
+    gap: 6px;
+  }
+  
+  .imageContainer {
+    padding: 10px;
+  }
+}

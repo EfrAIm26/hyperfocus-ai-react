@@ -5,8 +5,11 @@ import ReactMarkdown from 'react-markdown'
 import { Settings } from 'lucide-react'
 import ThinkingIndicator from '../ThinkingIndicator'
 import BionicText from '../BionicText/BionicText'
+import ModelSelector from './ModelSelector'
+import FileUpload from './FileUpload'
 import { useSettings } from '../../contexts/SettingsContext'
 import { hasMarkdownFormatting, processForBionicReading } from '../../utils/markdownCleaner'
+import { aiModels } from '../../data/models'
 import styles from './ChatWindow.module.css'
 
 interface Message {
@@ -14,6 +17,13 @@ interface Message {
   content: string
   role: 'user' | 'assistant'
   timestamp: Date
+}
+
+interface UploadedFile {
+  id: string
+  file: File
+  type: 'image' | 'document' | 'other'
+  preview?: string
 }
 
 interface ChatWindowProps {
@@ -186,23 +196,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('mistral-small-3.2')
+  const [selectedModel, setSelectedModel] = useState(aiModels[0]?.id || 'x-ai/grok-4')
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('create')
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   
   // Get settings from context for feature flags
   const { settings } = useSettings()
-
-  const models = [
-    { value: 'mistral-small-3.2', label: 'Mistral Small 3.2' },
-    { value: 'llama-3-8b', label: 'Llama 3 8B' },
-    { value: 'x-ai/grok-2-mini', label: 'Grok 2 Mini' },
-    { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
-    { value: 'google/gemini-2.5-flash-lite', label: 'Google: Gemini 2.5 Flash Lite' },
-    { value: 'openai-gpt-5-nano', label: 'OpenAI GPT-5 Nano' }
-  ]
 
   // Define all callback functions first to avoid initialization errors
   const scrollToBottom = useCallback(() => {
@@ -342,9 +344,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   }
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
+    // Allow sending if there's text OR uploaded files
+    if ((!inputMessage.trim() && uploadedFiles.length === 0) || isLoading) return
 
-    const messageContent = inputMessage.trim()
+    // Create message content - use text if available, otherwise indicate image upload
+    const messageContent = inputMessage.trim() || (uploadedFiles.length > 0 ? `[Imagen${uploadedFiles.length > 1 ? 's' : ''} subida${uploadedFiles.length > 1 ? 's' : ''}]` : '')
     const userMessage: Message = {
       id: Date.now().toString(),
       content: messageContent,
@@ -356,6 +360,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     const currentMessages = [...messages, userMessage]
     setMessages(currentMessages)
     setInputMessage('')
+    setUploadedFiles([]) // Clear uploaded files
     setIsLoading(true)
 
     // Create a temporary "thinking" message that will be replaced
@@ -473,6 +478,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     setInputMessage(question)
   }
 
+  const handleFilesChange = (files: UploadedFile[]) => {
+    setUploadedFiles(files)
+  }
+
   return (
     <div className={styles.chatWindow}>
       <div className={styles.chatHeader}>
@@ -481,17 +490,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
           <p className={styles.welcomeSubtitle}>Your intelligent study assistant</p>
         </div>
         <div className={styles.headerRight}>
-          <select 
-            value={selectedModel} 
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className={styles.modelSelect}
-          >
-            {models.map(model => (
-              <option key={model.value} value={model.value}>
-                {model.label}
-              </option>
-            ))}
-          </select>
           <button 
             className={styles.settingsButton}
             onClick={onSettingsToggle}
@@ -546,7 +544,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
                 <div className={styles.messageContent}>
                   {message.role === 'assistant' ? (
                     message.content === '__THINKING__' ? (
-                       <ThinkingIndicator model={models.find(m => m.value === selectedModel)?.label || selectedModel} />
+                       <ThinkingIndicator model={aiModels.find(m => m.id === selectedModel)?.name || selectedModel} />
                      ) : (
                       <MessageRenderer content={message.content} fontMode={settings.fontMode} />
                     )
@@ -589,7 +587,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
           <button 
             className={styles.sendButton}
             onClick={sendMessage}
-            disabled={!inputMessage.trim() || isLoading}
+            disabled={(!inputMessage.trim() && uploadedFiles.length === 0) || isLoading}
           >
             {isLoading ? (
               <div className={styles.loadingSpinner}></div>
@@ -599,6 +597,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
               </svg>
             )}
           </button>
+        </div>
+        
+        <div className={styles.bottomControls}>
+          <FileUpload 
+            onFilesChange={handleFilesChange}
+            disabled={isLoading}
+          />
+          <ModelSelector 
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+          />
         </div>
       </div>
     </div>
