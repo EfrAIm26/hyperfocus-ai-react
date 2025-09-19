@@ -10,7 +10,7 @@ import FileUpload from './FileUpload'
 import { useSettings } from '../../contexts/SettingsContext'
 import { hasMarkdownFormatting, processForBionicReading } from '../../utils/markdownCleaner'
 import { aiModels } from '../../data/models'
-import { processDocument, getFileType } from '../../utils/documentProcessor'
+import { processDocument } from '../../utils/documentProcessor'
 import styles from './ChatWindow.module.css'
 
 interface Message {
