@@ -343,6 +343,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     }
   }
 
+  // Helper function to convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   const sendMessage = async () => {
     // Allow sending if there's text OR uploaded files
     if ((!inputMessage.trim() && uploadedFiles.length === 0) || isLoading) return
@@ -399,6 +409,52 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         await updateChatTitle(chatId, userMessage.content)
       }
 
+      // Prepare messages with images for multimodal models
+      const messagesToSend = await Promise.all(
+        currentMessages.map(async (msg) => {
+          // For the last user message, include uploaded images
+          if (msg.role === 'user' && msg.id === userMessage.id && uploadedFiles.length > 0) {
+            const imageFiles = uploadedFiles.filter(file => file.type === 'image')
+            
+            if (imageFiles.length > 0) {
+              // Convert images to base64
+              const imageContents = await Promise.all(
+                imageFiles.map(async (file) => {
+                  const base64 = await fileToBase64(file.file)
+                  return {
+                    type: 'image_url',
+                    image_url: {
+                      url: base64
+                    }
+                  }
+                })
+              )
+              
+              // Create multimodal content
+              const content = []
+              if (inputMessage.trim()) {
+                content.push({
+                  type: 'text',
+                  text: inputMessage.trim()
+                })
+              }
+              content.push(...imageContents)
+              
+              return {
+                role: msg.role,
+                content: content
+              }
+            }
+          }
+          
+          // For other messages, use text content
+          return {
+            role: msg.role,
+            content: msg.content
+          }
+        })
+      )
+
       // Use our secure backend API endpoint
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -407,10 +463,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         },
         body: JSON.stringify({
           model: selectedModel,
-          messages: currentMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
+          messages: messagesToSend
         })
       })
 
