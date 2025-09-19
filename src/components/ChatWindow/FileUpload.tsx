@@ -22,11 +22,22 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange, disabled }) => {
 
   const getFileType = (file: File): 'image' | 'document' | 'other' => {
     if (file.type.startsWith('image/')) return 'image'
-    if (file.type === 'application/pdf' || 
-        file.type.includes('document') || 
-        file.type.includes('text') ||
-        file.type.includes('sheet') ||
-        file.type.includes('presentation')) return 'document'
+    
+    // Check for supported document types
+    const supportedDocTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation' // .pptx
+    ]
+    
+    if (supportedDocTypes.includes(file.type)) return 'document'
+    
+    // Fallback: check by file extension
+    const fileName = file.name.toLowerCase()
+    if (fileName.endsWith('.pdf') || fileName.endsWith('.docx') || fileName.endsWith('.pptx')) {
+      return 'document'
+    }
+    
     return 'other'
   }
 
@@ -116,7 +127,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange, disabled }) => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.pptx"
+        accept="image/*,.pdf,.docx,.pptx"
         onChange={handleFileChange}
         className={styles.hiddenInput}
       />

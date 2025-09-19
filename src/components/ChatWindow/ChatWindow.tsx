@@ -10,6 +10,7 @@ import FileUpload from './FileUpload'
 import { useSettings } from '../../contexts/SettingsContext'
 import { hasMarkdownFormatting, processForBionicReading } from '../../utils/markdownCleaner'
 import { aiModels } from '../../data/models'
+import { processDocument, getFileType } from '../../utils/documentProcessor'
 import styles from './ChatWindow.module.css'
 
 interface Message {
@@ -409,13 +410,54 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         await updateChatTitle(chatId, userMessage.content)
       }
 
-      // Prepare messages with images for multimodal models
+      // Prepare messages with images and documents for multimodal models
       const messagesToSend = await Promise.all(
         currentMessages.map(async (msg) => {
-          // For the last user message, include uploaded images
+          // For the last user message, include uploaded files
           if (msg.role === 'user' && msg.id === userMessage.id && uploadedFiles.length > 0) {
             const imageFiles = uploadedFiles.filter(file => file.type === 'image')
+            const documentFiles = uploadedFiles.filter(file => file.type === 'document')
             
+            // Create multimodal content
+            const content = []
+            
+            // Add text content if available
+            if (inputMessage.trim()) {
+              content.push({
+                type: 'text',
+                text: inputMessage.trim()
+              })
+            }
+            
+            // Process document files and add their text content
+            if (documentFiles.length > 0) {
+              const documentTexts = await Promise.all(
+                documentFiles.map(async (file) => {
+                  try {
+                    const result = await processDocument(file.file)
+                    if (result.error) {
+                      console.error(`Error processing ${file.file.name}:`, result.error)
+                      return `[Error procesando ${file.file.name}: ${result.error}]`
+                    }
+                    return `\n\n--- Contenido del archivo ${file.file.name} (${result.type.toUpperCase()}) ---\n${result.text}\n--- Fin del archivo ---\n`
+                  } catch (error) {
+                    console.error(`Error processing document ${file.file.name}:`, error)
+                    return `[Error procesando ${file.file.name}]`
+                  }
+                })
+              )
+              
+              // Add document content as text
+              const combinedDocumentText = documentTexts.join('\n')
+              if (combinedDocumentText.trim()) {
+                content.push({
+                  type: 'text',
+                  text: combinedDocumentText
+                })
+              }
+            }
+            
+            // Process image files
             if (imageFiles.length > 0) {
               // Convert images to base64
               const imageContents = await Promise.all(
@@ -430,16 +472,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
                 })
               )
               
-              // Create multimodal content
-              const content = []
-              if (inputMessage.trim()) {
-                content.push({
-                  type: 'text',
-                  text: inputMessage.trim()
-                })
-              }
               content.push(...imageContents)
-              
+            }
+            
+            // Return multimodal message if we have content, otherwise fallback to text
+            if (content.length > 0) {
               return {
                 role: msg.role,
                 content: content
