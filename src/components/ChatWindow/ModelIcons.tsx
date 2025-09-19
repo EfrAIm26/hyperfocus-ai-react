@@ -34,6 +34,8 @@ export const getProviderIcon = (provider: string) => {
       return <RiAiGenerate {...iconProps} style={{ color: '#1e40af' }} />;
     case 'deepseek':
       return <FaRobot {...iconProps} style={{ color: '#7c3aed' }} />;
+    case 'mistral':
+      return <FaBolt {...iconProps} style={{ color: '#ff7000' }} />;
     default:
       return <FaRobot {...iconProps} style={{ color: '#6b7280' }} />;
   }

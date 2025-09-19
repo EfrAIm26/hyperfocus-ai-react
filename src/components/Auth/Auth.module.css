@@ -3,11 +3,12 @@
 .container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-  padding: 20px;
+  padding: 40px 20px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-y: auto;
 }
 
 .card {
@@ -284,14 +285,23 @@
 /* Responsive Design */
 @media (max-width: 480px) {
   .container {
-    padding: 16px;
+    padding: 20px 16px;
+    align-items: flex-start;
   }
   
   .card {
     padding: 24px;
+    margin: 0;
   }
   
   .title {
     font-size: 2rem;
+  }
+}
+
+@media (max-height: 700px) {
+  .container {
+    align-items: flex-start;
+    padding: 20px;
   }
 }

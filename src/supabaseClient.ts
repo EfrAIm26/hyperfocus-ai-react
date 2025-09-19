@@ -1,24 +1,39 @@
 import { createClient } from '@supabase/supabase-js'
 
-// TODO: Replace with your actual Supabase URL and anon key
-// For development, using valid placeholder values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvdXItcHJvamVjdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjQ2NjI4MDAwLCJleHAiOjE5NjIyMDQwMDB9.placeholder'
+// Get Supabase credentials from environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 // Create a mock client for development if no real credentials are provided
 const createSupabaseClient = () => {
   // Check if we have real credentials (not placeholder values)
   const hasRealCredentials = 
-    supabaseUrl !== 'https://your-project.supabase.co' && 
-    !supabaseAnonKey.includes('placeholder')
+    supabaseUrl && 
+    supabaseAnonKey && 
+    supabaseUrl !== 'https://your-project-ref.supabase.co' && 
+    !supabaseAnonKey.includes('your-anon-key')
 
   if (!hasRealCredentials) {
-    console.warn('Using mock Supabase client for development. Please configure real credentials in environment variables.')
-    // Return a mock client that won't break the app
+    console.warn('⚠️ Supabase credentials not configured. Please update your .env file with real Supabase credentials.')
+    console.warn('📝 Instructions:')
+    console.warn('1. Go to https://supabase.com/dashboard')
+    console.warn('2. Create a new project or select an existing one')
+    console.warn('3. Go to Settings > API')
+    console.warn('4. Copy the Project URL and anon/publishable key to your .env file')
+    
+    // Return a mock client that shows helpful error messages
     return {
       auth: {
-        signUp: async () => ({ error: { message: 'Please configure Supabase credentials to use authentication' } }),
-        signInWithPassword: async () => ({ error: { message: 'Please configure Supabase credentials to use authentication' } }),
+        signUp: async () => ({ 
+          error: { 
+            message: 'Supabase not configured. Please check the console for setup instructions.' 
+          } 
+        }),
+        signInWithPassword: async () => ({ 
+          error: { 
+            message: 'Supabase not configured. Please check the console for setup instructions.' 
+          } 
+        }),
         signOut: async () => ({ error: null }),
         getSession: async () => ({ data: { session: null } }),
         onAuthStateChange: (callback: any) => {
@@ -26,7 +41,16 @@ const createSupabaseClient = () => {
           callback('SIGNED_OUT', null)
           return { data: { subscription: { unsubscribe: () => {} } } }
         }
-      }
+      },
+      from: () => ({
+        select: () => ({ eq: () => ({ order: () => ({ data: [], error: null }) }) }),
+        insert: () => ({ data: null, error: { message: 'Supabase not configured' } }),
+        update: () => ({ data: null, error: { message: 'Supabase not configured' } }),
+        delete: () => ({ data: null, error: { message: 'Supabase not configured' } })
+      }),
+      channel: () => ({
+        on: () => ({ subscribe: () => {} })
+      })
     } as any
   }
 
