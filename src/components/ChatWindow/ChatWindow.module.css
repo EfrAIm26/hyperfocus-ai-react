@@ -222,6 +222,44 @@
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(148, 163, 184, 0.1);
   padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.processingText {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mixedContent {
+  display: inline;
+  line-height: inherit;
+}
+
+.mixedContent > * {
+  display: inline;
+}
+
+.processingText::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid #94a3b8;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .typingIndicator {
@@ -670,4 +708,45 @@
     max-width: 200px;
     justify-content: center;
   }
+}
+
+/* Estilos de tema para paletas de colores */
+/* Estilo por defecto para el tema 'default' */
+:global(.theme-default) .botMessage .messageContent {
+  color: #e5e7eb; /* Un gris claro estándar */
+}
+
+/* Estilo para el tema 'vibrant' */
+:global(.theme-vibrant) .botMessage .messageContent {
+  color: #6ee7b7; /* Un verde menta vibrante */
+}
+
+/* Estilo para el tema 'calm' */
+:global(.theme-calm) .botMessage .messageContent {
+  color: #fcd34d; /* Un amarillo ámbar suave */
+}
+
+/* Estilo para el tema 'monochrome' */
+:global(.theme-monochrome) .botMessage .messageContent {
+  color: #d1d5db; /* Un gris ligeramente diferente */
+}
+
+:global(.theme-red) .botMessage .messageContent {
+  color: #fca5a5;
+}
+
+:global(.theme-green) .botMessage .messageContent {
+  color: #86efac;
+}
+
+:global(.theme-blue) .botMessage .messageContent {
+  color: #93c5fd;
+}
+
+:global(.theme-purple) .botMessage .messageContent {
+  color: #c4b5fd;
+}
+
+:global(.theme-orange) .botMessage .messageContent {
+  color: #fdba74;
 }

@@ -95,6 +95,8 @@
   flex-direction: column;
   overflow: hidden;
   transition: margin-right 0.3s ease-in-out;
+  position: relative;
+  width: 100%;
 }
 
 .mainContent.withSettingsPanel {

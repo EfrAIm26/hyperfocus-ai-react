@@ -4,6 +4,9 @@ import { supabase } from '../../supabaseClient'
 import ReactMarkdown from 'react-markdown'
 import { Settings } from 'lucide-react'
 import ThinkingIndicator from '../ThinkingIndicator'
+import BionicText from '../BionicText/BionicText'
+import { useSettings } from '../../contexts/SettingsContext'
+import { hasMarkdownFormatting, processForBionicReading } from '../../utils/markdownCleaner'
 import styles from './ChatWindow.module.css'
 
 interface Message {
@@ -66,6 +69,119 @@ const exampleQuestions: ExampleQuestion[] = [
   { id: '16', text: 'Explain machine learning algorithms', category: 'learn' }
 ]
 
+// Component for intelligent message rendering
+// Component for rendering mixed content (bold + bionic)
+const MixedContentRenderer: React.FC<{ content: string }> = ({ content }) => {
+  // Parse content to separate bold and normal text
+  const renderMixedContent = () => {
+    const parts = []
+    const boldRegex = /\*\*(.*?)\*\*/g
+    let lastIndex = 0
+    let match
+    let key = 0
+
+    while ((match = boldRegex.exec(content)) !== null) {
+      // Add normal text before bold (with bionic processing)
+      if (match.index > lastIndex) {
+        const normalText = content.slice(lastIndex, match.index)
+        if (normalText.trim()) {
+          parts.push(
+            <BionicText key={key++} content={normalText} />
+          )
+        }
+      }
+
+      // Add bold text (as ReactMarkdown to preserve formatting)
+      parts.push(
+        <ReactMarkdown key={key++}>{match[0]}</ReactMarkdown>
+      )
+
+      lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining normal text
+    if (lastIndex < content.length) {
+      const normalText = content.slice(lastIndex)
+      if (normalText.trim()) {
+        parts.push(
+          <BionicText key={key++} content={normalText} />
+        )
+      }
+    }
+
+    // If no bold text found, render all as bionic
+    if (parts.length === 0) {
+      return <BionicText content={content} />
+    }
+
+    return <>{parts}</>
+  }
+
+  return <div className={styles.mixedContent}>{renderMixedContent()}</div>
+}
+
+const MessageRenderer: React.FC<{ content: string; fontMode: 'standard' | 'bionic' }> = ({ content, fontMode }) => {
+  const [processedContent, setProcessedContent] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const { settings } = useSettings()
+
+  useEffect(() => {
+    if (fontMode === 'bionic' && hasMarkdownFormatting(content)) {
+      setIsProcessing(true)
+      processForBionicReading(content)
+        .then(processed => {
+          setProcessedContent(processed)
+          setIsProcessing(false)
+        })
+        .catch(error => {
+          console.error('Error processing for bionic reading:', error)
+          setProcessedContent(content) // Fallback to original content
+          setIsProcessing(false)
+        })
+    } else {
+      setProcessedContent(null)
+      setIsProcessing(false)
+    }
+  }, [content, fontMode])
+
+  // Componentes personalizados para react-markdown con colores dinámicos
+  const customComponents = {
+    h2: ({ children, ...props }: any) => (
+      <h2 {...props} style={{ color: settings.colors.heading }}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children, ...props }: any) => (
+      <h3 {...props} style={{ color: settings.colors.subheading }}>
+        {children}
+      </h3>
+    ),
+    p: ({ children, ...props }: any) => (
+      <p {...props} style={{ color: settings.colors.body }}>
+        {children}
+      </p>
+    )
+  }
+
+  // Show loading state while processing
+  if (isProcessing) {
+    return <div className={styles.processingText}>Processing...</div>
+  }
+
+  // Bionic mode with mixed content (bold preserved + bionic for normal text)
+  if (fontMode === 'bionic') {
+    const contentToRender = processedContent !== null ? processedContent : content
+    return <MixedContentRenderer content={contentToRender} />
+  }
+
+  // Standard mode with markdown and custom components for semantic coloring
+  return (
+    <div className={styles.mixedContent}>
+      <ReactMarkdown components={customComponents}>{content}</ReactMarkdown>
+    </div>
+  )
+}
+
 const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat, onSendMessage, onSettingsToggle }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
@@ -75,6 +191,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   const [selectedCategory, setSelectedCategory] = useState<string>('create')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  
+  // Get settings from context for feature flags
+  const { settings } = useSettings()
 
   const models = [
     { value: 'mistral-small-3.2', label: 'Mistral Small 3.2' },
@@ -429,7 +548,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
                     message.content === '__THINKING__' ? (
                        <ThinkingIndicator model={models.find(m => m.value === selectedModel)?.label || selectedModel} />
                      ) : (
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                      <MessageRenderer content={message.content} fontMode={settings.fontMode} />
                     )
                   ) : (
                     message.content

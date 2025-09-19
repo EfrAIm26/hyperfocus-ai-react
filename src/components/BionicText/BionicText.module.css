@@ -1,0 +1,73 @@
+/* BionicText Component Styles */
+
+.bionicText {
+  display: inline;
+  line-height: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.word {
+  display: inline;
+}
+
+.bold {
+  font-weight: 600;
+  color: inherit;
+}
+
+.normal {
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.space {
+  display: inline;
+  white-space: pre;
+}
+
+.punctuation {
+  display: inline;
+  font-weight: 400;
+  color: inherit;
+}
+
+/* Ensure proper text flow */
+.bionicText * {
+  display: inline;
+}
+
+/* Accessibility: Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .bionicText {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .bold {
+    font-weight: 700;
+  }
+  
+  .normal {
+    opacity: 1;
+  }
+}
+
+/* Print styles */
+@media print {
+  .bionicText {
+    color: black !important;
+  }
+  
+  .bold {
+    font-weight: 700;
+  }
+  
+  .normal {
+    opacity: 1;
+  }
+}

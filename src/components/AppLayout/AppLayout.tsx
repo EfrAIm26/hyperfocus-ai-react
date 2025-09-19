@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js'
 import Sidebar from '../Sidebar/Sidebar'
 import ChatWindow from '../ChatWindow/ChatWindow'
 import SettingsPanel from '../SettingsPanel'
+import { useSettings } from '../../contexts/SettingsContext'
 import styles from './AppLayout.module.css'
 
 
@@ -54,9 +55,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onSendMessage, 
   onRefreshData
 }) => {
+  const { settings } = useSettings()
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} theme-${settings.colorTheme || 'default'}`}>
       {/* Main Layout */}
       <div className={styles.mainLayout}>
         {/* Sidebar */}

@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient'
 import Auth from './components/Auth/Auth'
 import AppLayout from './components/AppLayout/AppLayout'
 import UpdatePassword from './components/UpdatePassword/UpdatePassword'
+import { SettingsProvider } from './contexts/SettingsContext'
 import './App.css'
 
 // Interfaces for centralized state management
@@ -257,19 +258,21 @@ const AppContent = () => {
               isPasswordRecovery ? (
                 <UpdatePassword />
               ) : (
-                <AppLayout 
-                    user={user} 
-                    courses={courses}
-                    chats={chats}
-                    selectedChatId={selectedChatId}
-                    isSettingsPanelOpen={isSettingsPanelOpen}
-                    onSettingsToggle={() => setIsSettingsPanelOpen(!isSettingsPanelOpen)}
-                    onCreateCourse={handleCreateCourse}
-                    onChatSelect={handleChatSelect}
-                    onNewChat={handleNewChat}
-                    onSendMessage={handleSendMessage}
-                    onRefreshData={refreshData}
-                  />
+                <SettingsProvider user={user}>
+                  <AppLayout 
+                      user={user} 
+                      courses={courses}
+                      chats={chats}
+                      selectedChatId={selectedChatId}
+                      isSettingsPanelOpen={isSettingsPanelOpen}
+                      onSettingsToggle={() => setIsSettingsPanelOpen(!isSettingsPanelOpen)}
+                      onCreateCourse={handleCreateCourse}
+                      onChatSelect={handleChatSelect}
+                      onNewChat={handleNewChat}
+                      onSendMessage={handleSendMessage}
+                      onRefreshData={refreshData}
+                    />
+                </SettingsProvider>
               )
             ) : (
               <Auth />
