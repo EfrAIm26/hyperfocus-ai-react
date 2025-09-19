@@ -73,13 +73,18 @@ const Auth: React.FC = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
+      // Get the correct origin for email confirmation
+      const currentOrigin = window.location.origin
+      const confirmationUrl = `${currentOrigin}/`
+      
       const { error } = await supabase.auth.signUp({
         email: state.email,
         password: state.password,
         options: {
           data: {
             full_name: state.fullName
-          }
+          },
+          emailRedirectTo: confirmationUrl
         }
       })
 
@@ -99,8 +104,12 @@ const Auth: React.FC = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
+      // Get the correct origin (handles different ports in dev/prod)
+      const currentOrigin = window.location.origin
+      const redirectUrl = `${currentOrigin}/?type=recovery`
+      
       const { error } = await supabase.auth.resetPasswordForEmail(state.email, {
-        redirectTo: `${window.location.origin}/?type=recovery`
+        redirectTo: redirectUrl
       })
 
       if (error) {

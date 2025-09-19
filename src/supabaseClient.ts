@@ -55,7 +55,14 @@ const createSupabaseClient = () => {
   }
 
   try {
-    return createClient(supabaseUrl, supabaseAnonKey)
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      }
+    })
   } catch (error) {
     console.error('Failed to create Supabase client:', error)
     throw error

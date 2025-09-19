@@ -198,8 +198,14 @@ const AppContent = () => {
       }
 
       currentChatId = newChat.id
+      
+      // Update chats list and selected chat ID immediately
       setChats(prev => [newChat, ...prev])
-      setSelectedChatId(currentChatId)
+      
+      // Use setTimeout to ensure state update happens after current execution
+      setTimeout(() => {
+        setSelectedChatId(currentChatId)
+      }, 0)
     }
 
     return currentChatId || null
