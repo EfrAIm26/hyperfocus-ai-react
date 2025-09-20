@@ -76,17 +76,14 @@ const Auth: React.FC = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
-      // Use production URL for email confirmation to avoid localhost issues
-      const confirmationUrl = 'https://usehyperfocus.com/'
-      
+      // Let Supabase use default redirect URL from dashboard configuration
       const { error } = await supabase.auth.signUp({
         email: state.email,
         password: state.password,
         options: {
           data: {
             full_name: state.fullName
-          },
-          emailRedirectTo: confirmationUrl
+          }
         }
       })
 
@@ -106,12 +103,8 @@ const Auth: React.FC = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
-      // Use production URL for password reset to avoid localhost issues
-      const redirectUrl = 'https://usehyperfocus.com/?type=recovery'
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(state.email, {
-        redirectTo: redirectUrl
-      })
+      // Let Supabase use default redirect URL from dashboard configuration
+      const { error } = await supabase.auth.resetPasswordForEmail(state.email)
 
       if (error) {
         setState(prev => ({ ...prev, error: error.message, loading: false }))

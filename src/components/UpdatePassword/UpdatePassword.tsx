@@ -29,7 +29,7 @@ const UpdatePassword: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         // Redirect to login if no session
-        window.location.href = 'https://usehyperfocus.com/'
+        window.location.href = '/'
       }
     }
     checkSession()
@@ -73,7 +73,7 @@ const UpdatePassword: React.FC = () => {
       
       // Redirect to main app after successful password update
       setTimeout(() => {
-        window.location.href = 'https://usehyperfocus.com/'
+        window.location.href = '/'
       }, 2000)
 
     } catch (error: any) {
