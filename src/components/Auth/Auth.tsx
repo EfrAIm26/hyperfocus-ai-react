@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../supabaseClient'
+import TermsAndConditions from '../TermsAndConditions/TermsAndConditions'
 import styles from './Auth.module.css'
 
 type AuthMode = 'login' | 'signup' | 'verify-email' | 'forgot-password'
@@ -16,6 +17,7 @@ interface AuthState {
   showPassword: boolean
   showConfirmPassword: boolean
   resetEmailSent: boolean
+  showTermsModal: boolean
 }
 
 const Auth: React.FC = () => {
@@ -32,7 +34,8 @@ const Auth: React.FC = () => {
     error: null,
     showPassword: false,
     showConfirmPassword: false,
-    resetEmailSent: false
+    resetEmailSent: false,
+    showTermsModal: false
   })
 
   useEffect(() => {
@@ -73,9 +76,8 @@ const Auth: React.FC = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
-      // Get the correct origin for email confirmation
-      const currentOrigin = window.location.origin
-      const confirmationUrl = `${currentOrigin}/`
+      // Use production URL for email confirmation to avoid localhost issues
+      const confirmationUrl = 'https://usehyperfocus.com/'
       
       const { error } = await supabase.auth.signUp({
         email: state.email,
@@ -104,9 +106,8 @@ const Auth: React.FC = () => {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     try {
-      // Get the correct origin (handles different ports in dev/prod)
-      const currentOrigin = window.location.origin
-      const redirectUrl = `${currentOrigin}/?type=recovery`
+      // Use production URL for password reset to avoid localhost issues
+      const redirectUrl = 'https://usehyperfocus.com/?type=recovery'
       
       const { error } = await supabase.auth.resetPasswordForEmail(state.email, {
         redirectTo: redirectUrl
@@ -360,7 +361,14 @@ const Auth: React.FC = () => {
                   required
                 />
                 <span className={styles.checkboxText}>
-                  I agree to the Terms and Conditions
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    className={styles.termsLink}
+                    onClick={() => setState(prev => ({ ...prev, showTermsModal: true }))}
+                  >
+                    Terms and Conditions
+                  </button>
                 </span>
               </label>
             </div>
@@ -427,7 +435,24 @@ const Auth: React.FC = () => {
     return renderForgotPassword()
   }
 
-  return renderAuthForm()
+  return (
+    <>
+      {renderAuthForm()}
+      
+      {state.showTermsModal && (
+        <TermsAndConditions
+          onAccept={() => {
+            setState(prev => ({ 
+              ...prev, 
+              showTermsModal: false, 
+              agreeToTerms: true 
+            }))
+          }}
+          onClose={() => setState(prev => ({ ...prev, showTermsModal: false }))}
+        />
+      )}
+    </>
+  )
 }
 
 export default Auth
