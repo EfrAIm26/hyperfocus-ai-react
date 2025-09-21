@@ -11,6 +11,8 @@ import { useSettings } from '../../contexts/SettingsContext'
 import { hasMarkdownFormatting, processForBionicReading } from '../../utils/markdownCleaner'
 import { aiModels } from '../../data/models'
 import { processDocument } from '../../utils/documentProcessor'
+import { MessageLimitService } from '../../services/messageLimitService'
+import MessageCounter from '../MessageCounter/MessageCounter'
 import styles from './ChatWindow.module.css'
 
 interface Message {
@@ -358,6 +360,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     // Allow sending if there's text OR uploaded files
     if ((!inputMessage.trim() && uploadedFiles.length === 0) || isLoading) return
 
+    // Check message limits before sending
+    const canSend = await MessageLimitService.canSendMessage()
+    if (!canSend) {
+      // Show limit reached message
+      const limitMessage: Message = {
+        id: 'limit-' + Date.now(),
+        content: MessageLimitService.getLimitReachedMessage(),
+        role: 'assistant',
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, limitMessage])
+      return
+    }
+
     // Create message content - use text if available, otherwise indicate image upload
     const messageContent = inputMessage.trim() || (uploadedFiles.length > 0 ? `[Imagen${uploadedFiles.length > 1 ? 's' : ''} subida${uploadedFiles.length > 1 ? 's' : ''}]` : '')
     const userMessage: Message = {
@@ -529,6 +545,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       await saveMessageToSupabase(assistantMessage, chatId)
       console.log('Assistant message saved successfully')
       
+      // Increment message count after successful send
+      const limitResult = await MessageLimitService.incrementMessageCount()
+      if (limitResult) {
+        // Check if user should see warning (at message 15)
+        if (limitResult.newCount === 15 && limitResult.messagesRemaining > 0) {
+          const warningMessage: Message = {
+            id: 'warning-' + Date.now(),
+            content: MessageLimitService.getWarningMessage(limitResult.messagesRemaining),
+            role: 'assistant',
+            timestamp: new Date()
+          }
+          setMessages(prev => [...prev, warningMessage])
+        }
+      }
+      
       // Ensure scroll to bottom after assistant message
       setTimeout(() => scrollToBottom(), 100)
 
@@ -578,6 +609,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         <div className={styles.headerLeft}>
           <h1 className={styles.welcomeTitle}>Hyperfocus AI</h1>
           <p className={styles.welcomeSubtitle}>Your intelligent study assistant</p>
+        </div>
+        <div className={styles.headerCenter}>
+          <MessageCounter />
         </div>
         <div className={styles.headerRight}>
           <button 
