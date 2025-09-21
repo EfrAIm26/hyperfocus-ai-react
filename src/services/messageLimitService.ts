@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 export interface MessageUsage {
   messageCount: number;
@@ -13,7 +13,6 @@ export interface MessageLimitResult {
 }
 
 export class MessageLimitService {
-  private static readonly DAILY_LIMIT = 20;
   private static readonly WARNING_THRESHOLD = 15;
 
   /**
