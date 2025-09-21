@@ -173,41 +173,58 @@ const AppContent = () => {
   }, [])
 
   const handleSendMessage = useCallback(async (message: string, chatId?: string): Promise<string | null> => {
-    if (!user) return null
+    if (!user) {
+      console.error('User not authenticated for sending message')
+      return null
+    }
 
     let currentChatId = chatId
 
-    // Create new chat if none exists
-    if (!currentChatId) {
-      // Generate title from first 4-5 words of the message
-      const words = message.trim().split(/\s+/)
-      const titleWords = words.slice(0, 5)
-      const title = titleWords.join(' ') + (words.length > 5 ? '...' : '')
-      
-      const { data: newChat, error: chatError } = await supabase
-        .from('chats')
-        .insert({
-          title: title,
-          user_id: user.id
-        })
-        .select()
-        .single()
+    try {
+      // Create new chat if none exists
+      if (!currentChatId) {
+        // Generate title from first 4-5 words of the message
+        const words = message.trim().split(/\s+/)
+        const titleWords = words.slice(0, 5)
+        const title = titleWords.join(' ') + (words.length > 5 ? '...' : '')
+        
+        const { data: newChat, error: chatError } = await supabase
+          .from('chats')
+          .insert({
+            title: title,
+            user_id: user.id
+          })
+          .select()
+          .single()
 
-      if (chatError) {
-        console.error('Error creating chat:', chatError)
-        throw chatError
+        if (chatError) {
+          console.error('Error creating chat:', chatError)
+          // Show user-friendly error message
+          alert('Error al crear el chat. Por favor, intenta de nuevo.')
+          return null
+        }
+
+        if (!newChat) {
+          console.error('No chat data returned from database')
+          alert('Error al crear el chat. Por favor, intenta de nuevo.')
+          return null
+        }
+
+        currentChatId = newChat.id
+        
+        // Update chats list and selected chat ID immediately
+        setChats(prev => [newChat, ...prev])
+        
+        // Update selected chat ID synchronously to prevent race condition
+        setSelectedChatId(currentChatId)
       }
 
-      currentChatId = newChat.id
-      
-      // Update chats list and selected chat ID immediately
-      setChats(prev => [newChat, ...prev])
-      
-      // Update selected chat ID synchronously to prevent race condition
-      setSelectedChatId(currentChatId)
+      return currentChatId || null
+    } catch (error) {
+      console.error('Unexpected error in handleSendMessage:', error)
+      alert('Error inesperado. Por favor, verifica tu conexión e intenta de nuevo.')
+      return null
     }
-
-    return currentChatId || null
   }, [user])
 
   const refreshData = useCallback(async () => {

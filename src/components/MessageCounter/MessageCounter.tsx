@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageLimitService } from '../../services/messageLimitService';
+import { supabase } from '../../supabaseClient';
 import styles from './MessageCounter.module.css';
 
 interface MessageCounterProps {
@@ -37,13 +38,27 @@ const MessageCounter: React.FC<MessageCounterProps> = ({ onLimitReached }) => {
 
     // Update time every minute
     const timeInterval = setInterval(updateTimeUntilReset, 60000);
+    
+    // Refresh usage every 5 minutes
+    const usageInterval = setInterval(loadUsageData, 5 * 60 * 1000);
 
-    // Refresh usage data every 5 minutes
-    const usageInterval = setInterval(loadUsageData, 300000);
+    // Set up real-time subscription for message usage updates
+    const subscription = supabase
+      .channel('message_usage_updates')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'daily_message_usage' },
+        (payload) => {
+          console.log('Message usage updated:', payload);
+          // Reload usage data when changes are detected
+          loadUsageData();
+        }
+      )
+      .subscribe();
 
     return () => {
       clearInterval(timeInterval);
       clearInterval(usageInterval);
+      subscription.unsubscribe();
     };
   }, []);
 

@@ -47,7 +47,7 @@ interface SidebarProps {
   selectedChatId?: string;
   // refreshTrigger removed to fix infinite re-render loop
   onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>;
-  onRefreshData: () => void;
+  onRefreshData?: () => void;
   onNewChat: () => void;
 }
 
@@ -159,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const setupRealtimeSubscriptions = () => {
-    // Only subscribe to topics changes (courses and chats are handled by App.tsx)
+    // Subscribe to topics changes
     const topicsSubscription = supabase
       .channel('topics_changes')
       .on('postgres_changes', 
@@ -168,8 +168,24 @@ const Sidebar: React.FC<SidebarProps> = ({
       )
       .subscribe();
 
+    // Subscribe to chats changes to ensure sidebar stays in sync
+    const chatsSubscription = supabase
+      .channel('chats_changes_sidebar')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'chats', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          console.log('Chat change detected in sidebar:', payload)
+          // Force a refresh of the parent component data
+          if (onRefreshData) {
+            onRefreshData()
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       topicsSubscription.unsubscribe();
+      chatsSubscription.unsubscribe();
     };
   };
 

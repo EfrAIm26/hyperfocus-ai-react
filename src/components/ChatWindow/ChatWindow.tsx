@@ -293,6 +293,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
     if (selectedChatId) {
       loadChatMessages(selectedChatId)
       setCurrentChatId(selectedChatId)
+    } else {
+      // Clear current chat when no chat is selected
+      setCurrentChatId(null)
     }
   }, [selectedChatId, loadChatMessages])
 
@@ -408,6 +411,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         chatId = await onSendMessage(messageContent, currentChatId || undefined)
         if (chatId && chatId !== currentChatId) {
           setCurrentChatId(chatId)
+          // Ensure we stay in the chat view after creating a new chat
+          console.log('New chat created, staying in chat view with ID:', chatId)
         }
       }
 

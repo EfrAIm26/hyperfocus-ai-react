@@ -20,33 +20,54 @@ export class MessageLimitService {
    */
   static async getCurrentUsage(): Promise<MessageUsage | null> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Authentication error in getCurrentUsage:', authError);
+        return null;
+      }
       
       if (!user) {
-        throw new Error('User not authenticated');
+        console.warn('User not authenticated in getCurrentUsage');
+        return null;
       }
 
       const { data, error } = await supabase
         .rpc('get_or_create_daily_usage', { p_user_id: user.id });
 
       if (error) {
-        console.error('Error getting daily usage:', error);
-        return null;
+        console.error('Database error getting daily usage:', error);
+        // Return default safe values on database error
+        return {
+          messageCount: 0,
+          canSendMessage: true,
+          messagesRemaining: 20
+        };
       }
 
       if (data && data.length > 0) {
         const usage = data[0];
         return {
-          messageCount: usage.message_count,
-          canSendMessage: usage.can_send_message,
-          messagesRemaining: usage.messages_remaining
+          messageCount: usage.message_count || 0,
+          canSendMessage: usage.can_send_message !== false,
+          messagesRemaining: usage.messages_remaining || 0
         };
       }
 
-      return null;
+      // Return default values if no data
+      return {
+        messageCount: 0,
+        canSendMessage: true,
+        messagesRemaining: 20
+      };
     } catch (error) {
-      console.error('Error in getCurrentUsage:', error);
-      return null;
+      console.error('Unexpected error in getCurrentUsage:', error);
+      // Return safe defaults on any error
+      return {
+        messageCount: 0,
+        canSendMessage: true,
+        messagesRemaining: 20
+      };
     }
   }
 
