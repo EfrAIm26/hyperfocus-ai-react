@@ -11,12 +11,14 @@ const MessageCounter: React.FC<MessageCounterProps> = ({ onLimitReached }) => {
   const [messagesRemaining, setMessagesRemaining] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeUntilReset, setTimeUntilReset] = useState<string>('');
+  const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
 
   const loadUsageData = async () => {
     try {
       const usage = await MessageLimitService.getCurrentUsage();
       if (usage) {
         setMessagesRemaining(usage.messagesRemaining);
+        setOptimisticCount(null); // Reset optimistic count when real data loads
         if (usage.messagesRemaining === 0 && onLimitReached) {
           onLimitReached();
         }
@@ -27,6 +29,27 @@ const MessageCounter: React.FC<MessageCounterProps> = ({ onLimitReached }) => {
       setIsLoading(false);
     }
   };
+
+  // Function to optimistically update the counter when a message is sent
+  const decrementOptimistically = () => {
+    if (messagesRemaining !== null) {
+      const currentCount = optimisticCount !== null ? optimisticCount : messagesRemaining;
+      const newCount = Math.max(0, currentCount - 1);
+      setOptimisticCount(newCount);
+      
+      if (newCount === 0 && onLimitReached) {
+        onLimitReached();
+      }
+    }
+  };
+
+  // Expose the decrement function globally for use by chat components
+  React.useEffect(() => {
+    (window as any).decrementMessageCounter = decrementOptimistically;
+    return () => {
+      delete (window as any).decrementMessageCounter;
+    };
+  }, [messagesRemaining, optimisticCount]);
 
   const updateTimeUntilReset = () => {
     setTimeUntilReset(MessageLimitService.getTimeUntilReset());
@@ -47,11 +70,11 @@ const MessageCounter: React.FC<MessageCounterProps> = ({ onLimitReached }) => {
       .channel('message_usage_updates')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'daily_message_usage' },
-        (payload) => {
-          console.log('Message usage updated:', payload);
-          // Reload usage data when changes are detected
-          loadUsageData();
-        }
+        (payload: any) => {
+           console.log('Message usage updated:', payload);
+           // Reload usage data when changes are detected
+           loadUsageData();
+         }
       )
       .subscribe();
 
@@ -81,31 +104,34 @@ const MessageCounter: React.FC<MessageCounterProps> = ({ onLimitReached }) => {
     return null; // Don't show if we couldn't load data
   }
 
+  // Use optimistic count if available, otherwise use real count
+  const displayCount = optimisticCount !== null ? optimisticCount : messagesRemaining;
+
   const getCounterColor = () => {
-    if (messagesRemaining === 0) return styles.counterDanger;
-    if (messagesRemaining <= 5) return styles.counterWarning;
+    if (displayCount === 0) return styles.counterDanger;
+    if (displayCount <= 5) return styles.counterWarning;
     return styles.counterNormal;
   };
 
   const getCounterText = () => {
-    if (messagesRemaining === 0) {
+    if (displayCount === 0) {
       return `Limit reached • Resets in ${timeUntilReset}`;
     }
-    if (messagesRemaining === 1) {
-      return `${messagesRemaining} message left • Resets in ${timeUntilReset}`;
+    if (displayCount === 1) {
+      return `${displayCount} message left • Resets in ${timeUntilReset}`;
     }
-    return `${messagesRemaining} messages left • Resets in ${timeUntilReset}`;
+    return `${displayCount} messages left • Resets in ${timeUntilReset}`;
   };
 
   return (
     <div className={`${styles.messageCounter} ${getCounterColor()}`}>
       <div className={styles.counterIcon}>
-        {messagesRemaining === 0 ? '🚫' : '💬'}
+        {displayCount === 0 ? '🚫' : '💬'}
       </div>
       <div className={styles.counterText}>
         {getCounterText()}
       </div>
-      {messagesRemaining <= 5 && messagesRemaining > 0 && (
+      {displayCount <= 5 && displayCount > 0 && (
         <div className={styles.betaNote}>
           Beta version - Free usage
         </div>

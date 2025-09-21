@@ -173,13 +173,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       .channel('chats_changes_sidebar')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'chats', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          console.log('Chat change detected in sidebar:', payload)
-          // Force a refresh of the parent component data
-          if (onRefreshData) {
-            onRefreshData()
-          }
-        }
+        (payload: any) => {
+           console.log('Chat change detected in sidebar:', payload)
+           // Force a refresh of the parent component data
+           if (onRefreshData) {
+             onRefreshData()
+           }
+         }
       )
       .subscribe();
 
@@ -266,7 +266,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (error) throw error;
       
       // Refresh data to update the UI
-      onRefreshData();
+      if (onRefreshData) {
+        onRefreshData();
+      }
       setEditingItem(null);
     } catch (error) {
       console.error('Error renaming item:', error);
@@ -316,7 +318,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (error) throw error;
       
       // Refresh data to update the UI
-      onRefreshData();
+      if (onRefreshData) {
+        onRefreshData();
+      }
       
       // If we deleted the currently selected chat, clear the selection and redirect to new chat
       if (type === 'chat' && selectedChatId === id) {
