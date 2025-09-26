@@ -36,7 +36,7 @@ const AppContent = () => {
   // Centralized state management
   const [courses, setCourses] = useState<Course[]>([])
   const [chats, setChats] = useState<Chat[]>([])
-  const [selectedChatId, setSelectedChatId] = useState<string | undefined>()
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(true)
 
   useEffect(() => {
@@ -169,7 +169,7 @@ const AppContent = () => {
   }, [])
 
   const handleNewChat = useCallback(() => {
-    setSelectedChatId(undefined)
+    setSelectedChatId(null)
   }, [])
 
   const handleSendMessage = useCallback(async (message: string, chatId?: string): Promise<string | null> => {
@@ -216,7 +216,7 @@ const AppContent = () => {
         setChats(prev => [newChat, ...prev])
         
         // Update selected chat ID synchronously to prevent race condition
-        setSelectedChatId(currentChatId)
+        setSelectedChatId(currentChatId || null)
       }
 
       return currentChatId || null

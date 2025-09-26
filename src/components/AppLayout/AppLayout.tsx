@@ -30,7 +30,7 @@ interface AppLayoutProps {
   user: User
   courses: Course[]
   chats: Chat[]
-  selectedChatId?: string
+  selectedChatId: string | null
   isSettingsPanelOpen: boolean
   onSettingsToggle: () => void
   // refreshTrigger removed to fix infinite re-render loop

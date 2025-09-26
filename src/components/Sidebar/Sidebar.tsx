@@ -44,7 +44,7 @@ interface SidebarProps {
   courses: Course[];
   chats: Chat[];
   onChatSelect: (chatId: string) => void;
-  selectedChatId?: string;
+  selectedChatId: string | null;
   // refreshTrigger removed to fix infinite re-render loop
   onCreateCourse: (courseData: { name: string; emoji: string; color: string }) => Promise<void>;
   onRefreshData?: () => void;

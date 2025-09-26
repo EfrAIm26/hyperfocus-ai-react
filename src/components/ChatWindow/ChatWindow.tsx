@@ -31,7 +31,7 @@ interface UploadedFile {
 
 interface ChatWindowProps {
   user: User
-  selectedChatId?: string
+  selectedChatId: string | null
   onNewChat?: () => void
   onSendMessage?: (message: string, chatId?: string) => Promise<string | null>
   onSettingsToggle?: () => void
@@ -282,19 +282,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   }, [messages, scrollToBottom])
 
   useEffect(() => {
-    // Initialize a new chat when component mounts
-    if (!selectedChatId) {
+    // Initialize a new chat when selectedChatId is explicitly null
+    if (selectedChatId === null) {
       initializeNewChat()
     }
   }, [selectedChatId, initializeNewChat])
 
   useEffect(() => {
     // Load messages when a chat is selected
-    if (selectedChatId) {
+    if (selectedChatId !== null) {
       loadChatMessages(selectedChatId)
       setCurrentChatId(selectedChatId)
     } else {
-      // Clear current chat when no chat is selected
+      // Clear current chat when selectedChatId is null (new chat mode)
       setCurrentChatId(null)
     }
   }, [selectedChatId, loadChatMessages])
@@ -408,7 +408,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       // Use centralized function to handle chat creation and get chat ID
       let chatId = currentChatId
       if (onSendMessage) {
-        chatId = await onSendMessage(messageContent, currentChatId || undefined)
+        chatId = await onSendMessage(messageContent, currentChatId ?? undefined)
         if (chatId && chatId !== currentChatId) {
           setCurrentChatId(chatId)
           // Ensure we stay in the chat view after creating a new chat
