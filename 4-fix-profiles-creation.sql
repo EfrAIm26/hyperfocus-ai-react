@@ -3,6 +3,26 @@
 -- Este script soluciona el problema donde nuevos usuarios no tienen perfiles creados
 
 -- =====================================================
+-- 0. LIMPIAR ESTADO PREVIO (SI ES NECESARIO)
+-- =====================================================
+
+-- Eliminar restricciones problemáticas si existen
+DO $$ 
+BEGIN
+    -- Eliminar constraint de email único si existe
+    IF EXISTS (SELECT 1 FROM information_schema.table_constraints 
+               WHERE constraint_name = 'profiles_email_key' 
+               AND table_name = 'profiles' 
+               AND table_schema = 'public') THEN
+        ALTER TABLE public.profiles DROP CONSTRAINT profiles_email_key;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Ignorar errores si la tabla no existe
+        NULL;
+END $$;
+
+-- =====================================================
 -- 1. CREAR TABLA PROFILES (SI NO EXISTE)
 -- =====================================================
 
@@ -87,17 +107,40 @@ CREATE TRIGGER on_auth_user_created
 -- =====================================================
 
 -- Insertar perfiles para usuarios que no los tienen
-INSERT INTO public.profiles (id, full_name, email, created_at, updated_at)
-SELECT 
-  u.id,
-  COALESCE(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', 'Usuario') as full_name,
-  u.email,
-  u.created_at,
-  NOW() as updated_at
-FROM auth.users u
-LEFT JOIN public.profiles p ON u.id = p.id
-WHERE p.id IS NULL
-ON CONFLICT (id) DO NOTHING;
+-- Usar DO block para manejar mejor los conflictos
+DO $$
+DECLARE
+    user_record RECORD;
+BEGIN
+    FOR user_record IN 
+        SELECT 
+            u.id,
+            COALESCE(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', 'Usuario') as full_name,
+            u.email,
+            u.created_at
+        FROM auth.users u
+        LEFT JOIN public.profiles p ON u.id = p.id
+        WHERE p.id IS NULL
+    LOOP
+        BEGIN
+            INSERT INTO public.profiles (id, full_name, email, created_at, updated_at)
+            VALUES (
+                user_record.id,
+                user_record.full_name,
+                user_record.email,
+                user_record.created_at,
+                NOW()
+            );
+            
+            RAISE NOTICE 'Perfil creado para usuario: % (%)', user_record.email, user_record.id;
+        EXCEPTION
+            WHEN unique_violation THEN
+                RAISE NOTICE 'Perfil ya existe para usuario: % (%)', user_record.email, user_record.id;
+            WHEN OTHERS THEN
+                RAISE NOTICE 'Error creando perfil para usuario: % (%) - Error: %', user_record.email, user_record.id, SQLERRM;
+        END;
+    END LOOP;
+END $$;
 
 -- =====================================================
 -- 7. FUNCIÓN PARA ACTUALIZAR PERFIL DE USUARIO
@@ -142,8 +185,12 @@ $$;
 -- 8. ÍNDICES PARA OPTIMIZAR CONSULTAS
 -- =====================================================
 
-CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
-CREATE INDEX IF NOT EXISTS idx_profiles_full_name ON public.profiles(full_name);
+-- Crear índices no únicos para optimizar consultas
+DROP INDEX IF EXISTS public.idx_profiles_email;
+DROP INDEX IF EXISTS public.idx_profiles_full_name;
+
+CREATE INDEX idx_profiles_email ON public.profiles(email) WHERE email IS NOT NULL;
+CREATE INDEX idx_profiles_full_name ON public.profiles(full_name) WHERE full_name IS NOT NULL;
 
 -- =====================================================
 -- 9. VERIFICACIÓN DE LA INSTALACIÓN
@@ -154,30 +201,47 @@ DECLARE
   profiles_count INTEGER;
   users_count INTEGER;
   missing_profiles INTEGER;
+  user_record RECORD;
 BEGIN
+  RAISE NOTICE '🔍 INICIANDO VERIFICACIÓN DE CONFIGURACIÓN DE PERFILES';
+  RAISE NOTICE '================================================';
+  
   -- Contar usuarios y perfiles
   SELECT COUNT(*) INTO users_count FROM auth.users;
   SELECT COUNT(*) INTO profiles_count FROM public.profiles;
   
   missing_profiles := users_count - profiles_count;
   
-  RAISE NOTICE '👥 Total de usuarios: %', users_count;
-  RAISE NOTICE '📋 Total de perfiles: %', profiles_count;
+  RAISE NOTICE '👥 Total de usuarios en auth.users: %', users_count;
+  RAISE NOTICE '📋 Total de perfiles en public.profiles: %', profiles_count;
   
   IF missing_profiles = 0 THEN
-    RAISE NOTICE '✅ Todos los usuarios tienen perfiles creados';
+    RAISE NOTICE '✅ PERFECTO: Todos los usuarios tienen perfiles creados';
   ELSE
-    RAISE NOTICE '⚠️  Usuarios sin perfil: %', missing_profiles;
+    RAISE NOTICE '⚠️  ATENCIÓN: % usuarios sin perfil', missing_profiles;
+    
+    -- Mostrar usuarios sin perfil
+    RAISE NOTICE '📝 Usuarios sin perfil:';
+    FOR user_record IN 
+      SELECT u.id, u.email, u.created_at
+      FROM auth.users u
+      LEFT JOIN public.profiles p ON u.id = p.id
+      WHERE p.id IS NULL
+      LIMIT 5
+    LOOP
+      RAISE NOTICE '   - %: % (creado: %)', user_record.email, user_record.id, user_record.created_at;
+    END LOOP;
   END IF;
   
   -- Verificar trigger
   IF EXISTS (
     SELECT 1 FROM information_schema.triggers 
     WHERE trigger_name = 'on_auth_user_created'
+    AND event_object_table = 'users'
   ) THEN
-    RAISE NOTICE '✅ Trigger on_auth_user_created configurado correctamente';
+    RAISE NOTICE '✅ Trigger on_auth_user_created: ACTIVO';
   ELSE
-    RAISE NOTICE '❌ Error: Trigger on_auth_user_created no encontrado';
+    RAISE NOTICE '❌ ERROR: Trigger on_auth_user_created NO ENCONTRADO';
   END IF;
   
   -- Verificar función
@@ -186,12 +250,42 @@ BEGIN
     WHERE routine_name = 'handle_new_user' 
     AND routine_schema = 'public'
   ) THEN
-    RAISE NOTICE '✅ Función handle_new_user configurada correctamente';
+    RAISE NOTICE '✅ Función handle_new_user: DISPONIBLE';
   ELSE
-    RAISE NOTICE '❌ Error: Función handle_new_user no encontrada';
+    RAISE NOTICE '❌ ERROR: Función handle_new_user NO ENCONTRADA';
   END IF;
   
-  RAISE NOTICE '🚀 Configuración de perfiles completada exitosamente';
+  -- Verificar políticas RLS
+  IF EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE tablename = 'profiles' 
+    AND schemaname = 'public'
+  ) THEN
+    RAISE NOTICE '✅ Políticas RLS: CONFIGURADAS';
+  ELSE
+    RAISE NOTICE '⚠️  Políticas RLS: NO ENCONTRADAS';
+  END IF;
+  
+  -- Verificar índices
+  IF EXISTS (
+    SELECT 1 FROM pg_indexes 
+    WHERE tablename = 'profiles' 
+    AND indexname = 'idx_profiles_email'
+  ) THEN
+    RAISE NOTICE '✅ Índices: CREADOS';
+  ELSE
+    RAISE NOTICE '⚠️  Índices: NO ENCONTRADOS';
+  END IF;
+  
+  RAISE NOTICE '================================================';
+  IF missing_profiles = 0 THEN
+    RAISE NOTICE '🎉 CONFIGURACIÓN COMPLETADA EXITOSAMENTE';
+    RAISE NOTICE '💡 Los nuevos usuarios tendrán perfiles automáticamente';
+    RAISE NOTICE '💡 Los usuarios existentes ya tienen perfiles creados';
+  ELSE
+    RAISE NOTICE '⚠️  CONFIGURACIÓN PARCIAL - Revisar usuarios sin perfil';
+  END IF;
+  RAISE NOTICE '================================================';
 END;
 $$;
 
