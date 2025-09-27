@@ -25,8 +25,29 @@ const Confirm: React.FC = () => {
         const access_token = searchParams.get('access_token')
         const refresh_token = searchParams.get('refresh_token')
         const type = searchParams.get('type')
+        const token_hash = searchParams.get('token_hash')
+        const error_code = searchParams.get('error_code')
+        const error_description = searchParams.get('error_description')
 
-        console.log('🔍 Parámetros de confirmación:', { access_token: !!access_token, refresh_token: !!refresh_token, type })
+        console.log('🔍 Parámetros de confirmación:', { 
+          access_token: !!access_token, 
+          refresh_token: !!refresh_token, 
+          type, 
+          token_hash: !!token_hash,
+          error_code,
+          error_description
+        })
+
+        // Si hay un error en los parámetros
+        if (error_code || error_description) {
+          console.error('❌ Error en URL:', { error_code, error_description })
+          setState({ 
+            loading: false, 
+            error: error_description || 'Error en el enlace de confirmación.', 
+            success: false 
+          })
+          return
+        }
 
         // Si no hay tokens, intentar obtenerlos del hash (formato alternativo)
         if (!access_token || !refresh_token) {
@@ -48,22 +69,34 @@ const Confirm: React.FC = () => {
           return
         }
 
-        // Si es una confirmación de email sin tokens explícitos
-        if (type === 'signup') {
-          console.log('🔍 Confirmación de signup detectada')
+        // Si es una confirmación de email sin tokens explícitos, verificar sesión actual
+        if (type === 'signup' || type === 'email_change' || type === 'recovery') {
+          console.log('🔍 Confirmación detectada, tipo:', type)
           // Verificar si el usuario ya está autenticado
           const { data: { session } } = await supabase.auth.getSession()
           if (session?.user) {
+            console.log('✅ Usuario ya autenticado:', session.user.email)
             setState({ loading: false, error: null, success: true })
             setTimeout(() => navigate('/'), 2000)
             return
           }
         }
 
+        // Intentar refrescar la sesión como último recurso
+        console.log('🔄 Intentando refrescar sesión...')
+        const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
+        
+        if (session?.user && !refreshError) {
+          console.log('✅ Sesión refrescada exitosamente:', session.user.email)
+          setState({ loading: false, error: null, success: true })
+          setTimeout(() => navigate('/'), 2000)
+          return
+        }
+
         // Si llegamos aquí, no pudimos confirmar
         setState({ 
           loading: false, 
-          error: 'No se pudieron encontrar los tokens de confirmación. Por favor, verifica el enlace del email.', 
+          error: 'No se pudieron encontrar los tokens de confirmación. Por favor, verifica el enlace del email o intenta iniciar sesión manualmente.', 
           success: false 
         })
 
@@ -130,7 +163,7 @@ const Confirm: React.FC = () => {
   }
 
   const handleGoToLogin = () => {
-    navigate('/auth')
+    navigate('/')
   }
 
   if (state.loading) {
