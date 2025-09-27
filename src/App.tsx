@@ -5,7 +5,7 @@ import { supabase } from './supabaseClient'
 import Auth from './components/Auth/Auth'
 import AppLayout from './components/AppLayout/AppLayout'
 import UpdatePassword from './components/UpdatePassword/UpdatePassword'
-import Confirmation from './components/Confirmation/Confirmation'
+import Confirm from './pages/Confirm'
 import { SettingsProvider } from './contexts/SettingsContext'
 import './App.css'
 
@@ -275,7 +275,7 @@ const AppContent = () => {
         />
         <Route 
           path="/confirm" 
-          element={<Confirmation />} 
+          element={<Confirm />} 
         />
         <Route 
           path="/" 
