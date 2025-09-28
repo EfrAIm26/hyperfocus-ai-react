@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       'openai-gpt-5-nano': 'openai/gpt-4-turbo',
       
       // New AI models
-      'x-ai/grok-4': 'x-ai/grok-4',
+      'x-ai/grok-4-fast': 'x-ai/grok-4-fast',
       'anthropic/claude-opus-4': 'anthropic/claude-opus-4',
       'anthropic/claude-sonnet-4': 'anthropic/claude-sonnet-4',
       'openai/gpt-5': 'openai/gpt-5',
@@ -31,9 +31,7 @@ export default async function handler(req, res) {
       'google/gemini-2.5-pro': 'google/gemini-2.5-pro',
       'perplexity/sonar-deep-research': 'perplexity/sonar-deep-research',
       'perplexity/sonar-reasoning-pro': 'perplexity/sonar-reasoning-pro',
-      'x-ai/grok-code-fast-1': 'x-ai/grok-code-fast-1',
-      'qwen/qwen3-30b-a3b': 'qwen/qwen3-30b-a3b',
-      'deepseek/deepseek-chat-v3-0324:free': 'deepseek/deepseek-chat-v3-0324:free'
+      'x-ai/grok-code-fast-1': 'x-ai/grok-code-fast-1'
     };
 
     const selectedModel = modelMap[model] || modelMap['mistral-small-3.2'];

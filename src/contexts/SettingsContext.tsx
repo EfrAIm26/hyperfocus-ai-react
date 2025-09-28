@@ -50,8 +50,9 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children, us
     if (user) {
       loadSettings()
     } else {
-      // Reset to default when no user
+      // Reset to default when no user and clear localStorage
       setSettings(DEFAULT_SETTINGS)
+      localStorage.removeItem('app-settings')
     }
   }, [user])
 

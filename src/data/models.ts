@@ -14,8 +14,14 @@ export interface AIModel {
 
 export const aiModels: AIModel[] = [
   {
-    "id": "x-ai/grok-4",
-    "name": "Grok 4",
+    "id": "google/gemini-2.5-flash-lite",
+    "name": "Gemini 2.5 Flash Lite",
+    "provider": "Google",
+    "capabilities": { "image_input": true, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
+  },
+  {
+    "id": "x-ai/grok-4-fast",
+    "name": "Grok 4 Fast",
     "provider": "xAI",
     "capabilities": { "image_input": true, "web_search": true, "code_generation": true, "pdf_input": true, "image_generation": false }
   },
@@ -66,24 +72,6 @@ export const aiModels: AIModel[] = [
     "name": "Grok Code Fast 1",
     "provider": "xAI",
     "capabilities": { "image_input": false, "web_search": false, "code_generation": true, "pdf_input": false, "image_generation": false }
-  },
-  {
-    "id": "qwen/qwen3-30b-a3b",
-    "name": "Qwen3 30B A3B",
-    "provider": "Qwen",
-    "capabilities": { "image_input": false, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
-  },
-  {
-    "id": "deepseek/deepseek-r1",
-    "name": "DeepSeek R1",
-    "provider": "DeepSeek",
-    "capabilities": { "image_input": true, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
-  },
-  {
-    "id": "google/gemini-2.5-flash-lite",
-    "name": "Gemini 2.5 Flash Lite",
-    "provider": "Google",
-    "capabilities": { "image_input": true, "web_search": false, "code_generation": true, "pdf_input": true, "image_generation": false }
   },
   {
     "id": "mistralai/mistral-7b-instruct",

@@ -199,7 +199,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedModel, setSelectedModel] = useState(aiModels[0]?.id || 'x-ai/grok-4')
+  const [selectedModel, setSelectedModel] = useState('google/gemini-2.5-flash-lite')
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('create')
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
@@ -235,24 +235,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
 
   const loadChatMessages = useCallback(async (chatId: string) => {
     try {
-      console.log('Loading messages for chat:', chatId, 'user:', user.id)
-      
       const { data: messagesData, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('id, content, role, created_at')
         .eq('chat_id', chatId)
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
 
       if (error) {
-        console.error('Error loading messages - Supabase error details:', error)
-        console.error('Error code:', error.code)
-        console.error('Error message:', error.message)
+        console.error('Error loading messages:', error.message)
         return
       }
-
-      console.log('Messages loaded from database:', messagesData?.length || 0, 'messages')
-      console.log('Raw messages data:', messagesData)
 
       const formattedMessages: Message[] = (messagesData || []).map((msg: any) => ({
         id: msg.id,
@@ -261,10 +254,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
         timestamp: new Date(msg.created_at)
       }))
 
-      console.log('Formatted messages:', formattedMessages.length)
       setMessages(formattedMessages)
     } catch (error) {
-      console.error('Error loading chat messages - Catch block:', error)
+      console.error('Error loading chat messages:', error)
     }
   }, [user.id])
 
@@ -301,9 +293,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
 
   const saveMessageToSupabase = async (message: Omit<Message, 'id'>, chatId: string) => {
     try {
-      console.log('Saving message to Supabase:', { chatId, role: message.role, content: message.content.substring(0, 50) + '...' })
-      
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('messages')
         .insert({
           chat_id: chatId,
@@ -312,20 +302,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
           role: message.role,
           created_at: message.timestamp.toISOString()
         })
-        .select()
-        .single()
 
       if (error) {
-        console.error('Error saving message - Supabase error details:', error)
-        console.error('Error code:', error.code)
-        console.error('Error message:', error.message)
-        console.error('Error details:', error.details)
-        return
+        console.error('Error saving message:', error.message)
+        throw error
       }
-      
-      console.log('Message saved successfully:', data)
     } catch (error) {
-      console.error('Error saving message to Supabase - Catch block:', error)
+      console.error('Error saving message to Supabase:', error)
+      throw error
     }
   }
 
@@ -421,13 +405,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ user, selectedChatId, onNewChat
       }
 
       // Save user message to Supabase
-      console.log('About to save user message:', userMessage.content.substring(0, 50) + '...')
       await saveMessageToSupabase(userMessage, chatId)
-      console.log('User message saved, proceeding with AI request')
 
       // Update chat title if this is the first message
       if (messages.length === 0) {
-        console.log('Updating chat title for first message')
         await updateChatTitle(chatId, userMessage.content)
       }
 

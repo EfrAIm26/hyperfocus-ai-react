@@ -65,6 +65,7 @@ const AppContent = () => {
     if (!user) {
       setCourses([])
       setChats([])
+      setSelectedChatId(null) // Reset selected chat when user logs out
       return
     }
 
